@@ -1417,9 +1417,10 @@ function setupPage() {
         .browser-actions button:active { background: #ffd19b; color: #21152e; }
         .browser-actions button:focus-visible { outline: 2px solid #ffe186; outline-offset: 2px; }
         #game.in-dock .browser-actions {
-            top: auto; right: auto; left: 50%;
-            bottom: calc(17% + env(safe-area-inset-bottom, 0px)); transform: translateX(-50%);
+            top: auto; right: auto; left: max(5px, env(safe-area-inset-left));
+            bottom: max(2px, env(safe-area-inset-bottom));
         }
+        #game.in-dock .browser-actions button { min-height: 24px; padding: 1px 5px; font-size: 17px; }
         #game.desktop-play .browser-actions { top: auto; bottom: 3px; }
         #game.desktop-play .browser-actions button { min-height: 22px; padding-block: 1px; }
         .browser-tip {
@@ -1470,7 +1471,9 @@ function attachBrowserHost(game2) {
     const native = Boolean(document.fullscreenElement);
     const installedFullscreen = fullscreenDisplay.matches && !native;
     const installed2 = installedHere || installedFullscreen || standaloneDisplay.matches || navigator.standalone === true;
-    fullscreen.textContent = native ? "\u26F6 Exit fullscreen" : "\u26F6 Fullscreen";
+    const fullscreenLabel = native ? "Exit fullscreen" : "Fullscreen";
+    fullscreen.textContent = scene === "play" && game2.input.touchDevice ? "\u26F6" : "\u26F6 " + fullscreenLabel;
+    fullscreen.setAttribute("aria-label", fullscreenLabel);
     fullscreen.hidden = installedFullscreen;
     install.hidden = scene !== "title" || installed2 || !numericRoute && !window.isSecureContext;
     actions.hidden = scene !== "title" && !wideScenes.has(scene) || fullscreen.hidden && install.hidden;
@@ -33751,7 +33754,7 @@ function controlsTouch(opts = {}) {
 }
 
 // game/engine.ts
-var composed = createGame({ "width": 640, "height": 360, "fit": "height", "background": "#000000", "pixelArt": true, "backgroundPolicy": "pause", "seed": 68148 }).use(renderer()).use(side()).use(screen2()).use(controls2d()).use(maths()).use(color()).use(typography2()).use(audio()).use(tween()).use(save({ "namespace": "pizza-fish-taco-and-friends" })).use(renderTexture()).use(feel()).use(bars()).use(controlsTouch({ "alpha": 0.66, "stick": { "anchor": "bottom-left", "x": 68, "y": 65, "r": 44, "deadzone": 0.23, "tint": "#c4c0ff", "codes": { "left": "Touch:left", "right": "Touch:right", "up": "Touch:up", "down": "Touch:down" } } }));
+var composed = createGame({ "width": 640, "height": 360, "fit": "height", "background": "#000000", "pixelArt": true, "backgroundPolicy": "pause", "seed": 68148 }).use(renderer()).use(side()).use(screen2()).use(controls2d()).use(maths()).use(color()).use(typography2()).use(audio()).use(tween()).use(save({ "namespace": "pizza-fish-taco-and-friends" })).use(renderTexture()).use(feel()).use(bars()).use(controlsTouch({ "alpha": 0.66, "stick": { "anchor": "bottom-left", "x": 68, "y": 65, "r": 44, "deadzone": 0.23, "tint": "#9deeda", "codes": { "left": "Touch:left", "right": "Touch:right", "up": "Touch:up", "down": "Touch:down" } } }));
 var game = composed.game;
 var signals = composed.signals;
 
@@ -34941,31 +34944,32 @@ var UTILITY_RADIUS = 24;
 var UTILITY_HIT_PADDING = 11;
 var UTILITY_SPACING = 82;
 var CONTROL_GAP = 12;
+var TOUCH_FOOTER_HEIGHT = 32;
+var COVER_FADE_DISTANCE = 22;
+var COVERED_OPACITY = 0.2;
 var showing = false;
 var hasAlly = false;
 var canceledCharge = false;
 var visibleSurface;
-function touchDockTop() {
-  return game.screen.height - 128 - (game.kernel.opts.safe?.bottom ?? 0);
+function touchFooterTop() {
+  return game.screen.height - TOUCH_FOOTER_HEIGHT - (game.kernel.opts.safe?.bottom ?? 0);
 }
 function layout() {
   const screen3 = game.screen;
   const safe = game.kernel.opts.safe ?? { left: 0, right: 0, top: 0, bottom: 0 };
   const right = screen3.width - safe.right;
   const bottom = screen3.height - safe.bottom;
-  const lower = bottom - 43;
-  const upper = bottom - 102;
-  const charge = { action: "charge", x: right - 218, y: lower, r: 22 };
+  const roll = { action: "dodge", x: right - 153, y: bottom - 76, r: 27 };
   const combat = [
-    { action: "melee", x: right - 62, y: lower, r: 40 },
-    { action: "jump", x: right - 25, y: upper, r: 22 },
-    { action: "dodge", x: right - 145, y: lower, r: 27 },
-    { action: "shoot", x: right - 176, y: upper, r: 22 },
-    { action: "special", x: right - 102, y: upper, r: 24 },
-    charge
+    { action: "melee", x: right - 74, y: bottom - 70, r: 40 },
+    { action: "jump", x: right - 32, y: bottom - 132, r: 23 },
+    roll,
+    { action: "special", x: right - 104, y: bottom - 141, r: 25 },
+    { action: "charge", x: right - 176, y: bottom - 136, r: 22 },
+    { action: "shoot", x: right - 53, y: bottom - 192, r: 22 }
   ];
-  if (hasAlly) combat.push({ action: "assist", x: right - 246, y: upper, r: 22 });
-  const combatLeft = charge.x - combatHitRadius(charge);
+  if (hasAlly) combat.push({ action: "assist", x: right - 166, y: bottom - 196, r: 22 });
+  const combatLeft = roll.x - combatHitRadius(roll);
   const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
   const utilityCenter = deterministicMath.min((safe.left + right) / 2, combatLeft - CONTROL_GAP - utilityHalfWidth);
   return [
@@ -35025,14 +35029,11 @@ function listenForTouchActions() {
   } });
 }
 var TouchButtons = class {
-  dock = game.texture.create({ id: "phone-control-dock", layer: "hud", width: 640, height: 360, y: 180 });
+  trim = new ViewportTexture("phone-control-trim", -2);
   buttons = new ViewportTexture("phone-buttons", 23);
   previous = "";
-  dockY = -1;
-  constructor() {
-    this.dock.handle.z = -2;
-  }
-  render(meter, ally, music, charge) {
+  previousTrim = "";
+  render(fighter, meter, ally, music, charge) {
     hasAlly = ally;
     const surface = this.buttons.current;
     if (surface.handle !== visibleSurface) {
@@ -35041,28 +35042,28 @@ var TouchButtons = class {
     }
     surface.handle.visible = showing;
     if (!showing) return;
-    this.dock.handle.width = game.screen.width;
-    this.dock.handle.x = game.screen.width / 2;
-    const top = touchDockTop();
-    if (this.dockY !== top) {
-      this.dockY = top;
-      this.dock.clear().draw((ctx) => {
-        const paint2 = ctx.createLinearGradient(0, top, 0, 360);
-        paint2.addColorStop(0, "#241a30");
-        paint2.addColorStop(1, "#13101f");
-        ctx.fillStyle = paint2;
-        ctx.fillRect(0, top, 640, 360 - top);
-        ctx.fillStyle = "#694a74";
-        ctx.fillRect(0, top, 640, 1);
-        ctx.fillStyle = "#d896b7";
-        ctx.fillRect(14, top, 37, 2);
-        ctx.fillRect(589, top, 37, 2);
-      });
+    this.drawTrim();
+    const player = game.camera.project(fighter.x, fighter.y);
+    const halfWidth = fighter.width * game.camera.zoom * 0.33;
+    const halfHeight = fighter.height * game.camera.zoom * 0.4;
+    const opacityAt = (x, y, radius) => {
+      const dx = deterministicMath.max(0, deterministicMath.abs(x - player.x) - halfWidth);
+      const dy = deterministicMath.max(0, deterministicMath.abs(y - player.y) - halfHeight);
+      const clearance = deterministicMath.hypot(dx, dy) - radius;
+      const blend2 = deterministicMath.min(1, deterministicMath.max(0, clearance / COVER_FADE_DISTANCE));
+      const opacity = COVERED_OPACITY + (1 - COVERED_OPACITY) * blend2;
+      return deterministicMath.round(opacity * 20) / 20;
+    };
+    const ring = game.kernel.roster.byId("touch-stick");
+    const thumb = game.kernel.roster.byId("touch-thumb");
+    if (ring) {
+      ring.alpha = opacityAt(ring.x, ring.y, ring.width * 0.32) * 0.66;
+      if (thumb) thumb.alpha = opacityAt(thumb.x, thumb.y, thumb.width / 2) * 0.66;
     }
-    const buttons = layout();
+    const buttons = layout().map((button) => ({ ...button, opacity: opacityAt(button.x, button.y, button.r) }));
     const held = new Set(activePointers.values());
     const signature = JSON.stringify([
-      buttons.map((b) => [b.x, b.y, b.r]),
+      buttons.map((b) => [b.x, b.y, b.r, b.opacity]),
       [...held],
       deterministicMath.floor(meter),
       music,
@@ -35074,8 +35075,50 @@ var TouchButtons = class {
       for (const button of buttons) {
         const progress = button.action === "special" ? meter / 100 : button.action === "charge" ? charge : 0;
         const size = button.action === "melee" ? 84 : button.action === "pause" || button.action === "music" ? 64 : button.r * 2 + 5;
+        ctx.globalAlpha = button.opacity;
         drawTouchGlyph(ctx, button.action, button.x, button.y, size, held.has(button.action), progress, music);
       }
+      ctx.globalAlpha = 1;
+    });
+  }
+  drawTrim() {
+    const { width, height } = game.screen;
+    const top = touchFooterTop();
+    const key = width + ":" + height + ":" + top;
+    if (key === this.previousTrim) return;
+    this.previousTrim = key;
+    this.trim.current.clear().draw((ctx) => {
+      const center = width / 2;
+      ctx.beginPath();
+      ctx.moveTo(0, top - 27);
+      ctx.bezierCurveTo(61, top - 32, 110, top + 4, center - 120, top - 2);
+      ctx.quadraticCurveTo(center, top + 16, center + 113, top - 2);
+      ctx.bezierCurveTo(width - 138, top - 2, width - 59, top - 51, width, top - 48);
+      const lip = ctx.createLinearGradient(0, 0, width, 0);
+      lip.addColorStop(0, "#54ffd8b0");
+      lip.addColorStop(0.29, "#7562fd40");
+      lip.addColorStop(0.53, "#ce76ff39");
+      lip.addColorStop(0.73, "#ff5ca45c");
+      lip.addColorStop(1, "#ff945acc");
+      ctx.strokeStyle = lip;
+      ctx.globalAlpha = 0.14;
+      ctx.lineWidth = 9;
+      ctx.stroke();
+      ctx.globalAlpha = 0.32;
+      ctx.lineWidth = 4.5;
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      ctx.lineWidth = 1.6;
+      ctx.stroke();
+      ctx.lineTo(width, height);
+      ctx.lineTo(0, height);
+      ctx.closePath();
+      const shade = ctx.createLinearGradient(0, top - 50, 0, height);
+      shade.addColorStop(0, "#1d0f3508");
+      shade.addColorStop(0.62, "#1b0e2b88");
+      shade.addColorStop(1, "#130c23ed");
+      ctx.fillStyle = shade;
+      ctx.fill();
     });
   }
 };
@@ -37390,7 +37433,7 @@ var StageArt = class {
   cameos;
   directionSign;
   cameraY(zoom) {
-    return this.phone ? STREET_BOTTOM + (192 - touchDockTop()) / zoom : 180;
+    return this.phone ? STREET_BOTTOM + (192 - touchFooterTop()) / zoom : 180;
   }
   render(c, dt, age, hazards) {
     const h = c.hero;
@@ -37404,7 +37447,9 @@ var StageArt = class {
     const viewWidth = half * 2;
     const panoramaWidth = deterministicMath.max(1152, viewWidth + 64);
     this.far.width = panoramaWidth;
-    this.far.height = 179 * panoramaWidth / 1152;
+    const panoramaHeight = 179 * panoramaWidth / 1152;
+    const topBehindHud = game.camera.y + (42 - game.screen.height / 2) / zoom;
+    this.far.height = this.phone ? deterministicMath.max(panoramaHeight, 211 - topBehindHud) : panoramaHeight;
     this.far.y = 211 - this.far.height / 2;
     const parallax = width > viewWidth ? 1 - (panoramaWidth - viewWidth) / (width - viewWidth) : 1;
     this.far.x = deterministicMath.round(panoramaWidth / 2 + scroll * parallax);
@@ -38175,7 +38220,7 @@ var Play = {
       distance3 = deterministicMath.max(distance3, h.x);
       view.render(c, dt, age, hazards);
       hud.render(c, hint(), intro, index, (distance3 - 96) / (destinationX - 96));
-      buttons?.render(h.meter, c.assists.length > 0, musicEnabled(), h.chargeProgress);
+      buttons?.render(h.sprite, h.meter, c.assists.length > 0, musicEnabled(), h.chargeProgress);
       if (h.hp <= 0) {
         lost += dt;
         if (lost > 1) finish(false);
