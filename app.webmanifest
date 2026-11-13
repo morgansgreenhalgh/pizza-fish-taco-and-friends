@@ -1,0 +1,16 @@
+{
+  "id": "./",
+  "name": "Pizza Fish Taco and Friends",
+  "short_name": "Pizza Fish Taco",
+  "description": "A neon arcade brawler through Snack City.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "fullscreen",
+  "orientation": "landscape",
+  "background_color": "#110c21",
+  "theme_color": "#110c21",
+  "icons": [
+    { "src": "local/app-icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "local/app-icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
