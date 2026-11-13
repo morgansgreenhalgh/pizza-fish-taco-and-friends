@@ -1416,6 +1416,14 @@ function setupPage() {
         }
         .browser-actions button:active { background: #ffd19b; color: #21152e; }
         .browser-actions button:focus-visible { outline: 2px solid #ffe186; outline-offset: 2px; }
+        #game.mobile-opening .browser-actions button {
+            min-height: 36px; padding-inline: 12px;
+            background: linear-gradient(120deg, #ffe18b, #ffa674);
+            color: #29152c; border-color: #fff2bf; border-radius: 2px 9px;
+            box-shadow: 0 0 16px #ff8d8266;
+            font-weight: 900; font-style: italic; text-transform: uppercase; letter-spacing: .05em;
+        }
+        #game.mobile-opening .browser-actions button:active { background: #fff4bb; }
         #game.in-dock .browser-actions {
             top: auto; right: auto; left: max(5px, env(safe-area-inset-left));
             bottom: max(2px, env(safe-area-inset-bottom));
@@ -1470,17 +1478,19 @@ function attachBrowserHost(game2) {
   function updateActions() {
     const native = Boolean(document.fullscreenElement);
     const installedFullscreen = fullscreenDisplay.matches && !native;
+    const mobileOpening = scene === "opening" && game2.input.touchDevice;
     const installed2 = installedHere || installedFullscreen || standaloneDisplay.matches || navigator.standalone === true;
     const fullscreenLabel = native ? "Exit fullscreen" : "Fullscreen";
     fullscreen.textContent = scene === "play" && game2.input.touchDevice ? "\u26F6" : "\u26F6 " + fullscreenLabel;
     fullscreen.setAttribute("aria-label", fullscreenLabel);
-    fullscreen.hidden = installedFullscreen;
+    fullscreen.hidden = installedFullscreen || mobileOpening && native;
     install.hidden = scene !== "title" || installed2 || !numericRoute && !window.isSecureContext;
-    actions.hidden = scene !== "title" && !wideScenes.has(scene) || fullscreen.hidden && install.hidden;
+    actions.hidden = scene !== "title" && !wideScenes.has(scene) && !mobileOpening || fullscreen.hidden && install.hidden;
   }
   function layout2(next) {
     scene = next;
     host3.classList.toggle("wide-play", wideScenes.has(next));
+    host3.classList.toggle("mobile-opening", next === "opening" && game2.input.touchDevice);
     host3.classList.toggle("in-dock", next === "play" && game2.input.touchDevice);
     host3.classList.toggle("desktop-play", next === "play" && !game2.input.touchDevice);
     game2.kernel.resize();
@@ -34801,10 +34811,10 @@ var ViewportTexture = class {
 // game/touch-art.ts
 var INK = "#24152d";
 var PAPER = "#fff2c7";
-var GOLD = "#ffd271";
 var ORANGE = "#ff8f61";
 var PINK = "#ff86a7";
 var MINT = "#8df6d5";
+var BLUE = "#70baff";
 var stickers = {
   melee: {
     color: "#ffb96f",
@@ -34822,11 +34832,9 @@ var stickers = {
     color: "#9af3e3",
     backing: "M 7,41 Q 3,29 15,18 Q 25,8 46,10 Q 60,11 60,26 Q 58,43 44,52 Q 23,61 12,51 Z",
     art: [
-      [PAPER, "M 13,39 L 10,37 L 17,26 L 22,28 L 16,39 Z M 23,49 L 19,47 L 23,39 L 27,41 Z"],
-      [INK, "M 39,9 L 51,6 L 49,20 L 45,16 L 37,25 L 32,21 L 40,13 Z"],
-      [PAPER, "M 20,38 L 23,26 L 29,23 L 33,30 L 41,29 L 49,25 Q 55,23 56,29 Q 57,34 50,39 L 31,49 Q 25,52 20,46 Z", true],
-      [MINT, "M 21,37 L 24,27 L 29,25 L 33,32 L 41,31 L 49,27 Q 53,25 54,29 L 49,34 L 25,44 Z"],
-      [INK, "M 24,42 L 35,38 L 37,40 L 26,45 Z M 33,32 L 35,36 L 33,37 L 31,33 Z M 38,30 L 40,34 L 38,35 L 36,31 Z"]
+      [PAPER, "M 13,32 L 32,10 L 51,32 L 41,32 L 41,45 L 23,45 L 23,32 Z", true],
+      [MINT, "M 15,31 L 32,11 L 48,30 L 40,30 L 32,21 L 23,31 Z"],
+      [INK, "M 24,49 H 40 V 52 H 24 Z"]
     ]
   },
   dodge: {
@@ -34834,10 +34842,8 @@ var stickers = {
     backing: "M 6,33 Q 10,19 25,15 Q 43,7 56,18 Q 65,27 60,39 Q 56,55 32,55 Q 11,53 6,42 Z",
     art: [
       [PAPER, "M 4,32 L 21,25 L 17,30 L 5,35 Z M 1,41 L 20,34 L 17,39 L 4,44 Z M 9,47 L 21,43 L 18,48 L 10,50 Z"],
-      [ORANGE, "M 19,36 Q 20,23 33,19 Q 47,16 54,27 Q 61,40 48,49 Q 34,57 24,46 Z", true],
-      [GOLD, "M 24,35 Q 26,25 37,24 Q 50,22 53,34 L 49,44 L 25,41 Z"],
-      [MINT, "M 23,34 L 28,34 L 32,38 L 38,35 L 43,39 L 49,36 L 53,38 L 49,46 L 25,41 Z"],
-      [INK, "M 38,27 Q 52,29 46,40 Q 42,45 33,43 L 37,49 L 30,49 L 23,41 L 31,35 L 37,36 L 32,40 Q 45,41 44,34 Q 42,30 37,30 Z"]
+      [PAPER, "M 20,37 Q 17,21 31,16 Q 42,12 50,20 Q 60,30 53,42 L 58,44 L 43,51 L 42,35 L 47,38 Q 52,28 44,23 Q 33,17 27,28 L 25,37 Z", true],
+      [PINK, "M 29,39 L 36,30 L 37,41 L 31,45 Z"]
     ]
   },
   shoot: {
@@ -34845,9 +34851,9 @@ var stickers = {
     backing: "M 5,35 Q 5,23 22,16 Q 36,7 51,13 Q 63,19 59,35 Q 54,51 33,52 Q 14,56 5,43 Z",
     art: [
       [PAPER, "M 5,24 L 24,22 L 18,27 L 1,28 Z M 4,37 L 24,31 L 19,37 L 2,42 Z M 10,46 L 28,39 L 23,45 L 9,50 Z"],
-      [GOLD, "M 23,19 Q 36,11 49,16 L 57,30 L 31,49 Q 28,51 27,47 Z", true],
-      [ORANGE, "M 23,19 Q 33,10 47,13 Q 58,17 58,29 L 53,34 Q 52,23 46,21 Q 33,17 24,25 Z", true],
-      [INK, "M 30,29 L 35,27 L 39,30 L 36,35 L 31,35 Z M 44,24 L 48,26 L 47,30 L 42,30 L 40,26 Z M 34,38 L 38,37 L 40,40 L 37,44 L 33,42 Z"]
+      [PAPER, "M 19,23 L 41,17 Q 50,17 60,23 Q 57,34 47,38 L 26,44 L 31,34 L 19,34 L 25,27 Z", true],
+      [BLUE, "M 28,34 L 46,27 L 57,23 Q 56,32 47,37 L 28,42 Z"],
+      [INK, "M 42,19 L 46,18 L 52,34 L 48,36 Z"]
     ]
   },
   charge: {
@@ -34855,10 +34861,9 @@ var stickers = {
     backing: "M 15,13 Q 25,6 39,9 Q 56,11 57,28 Q 60,44 48,53 Q 29,58 17,52 Q 6,45 9,30 Z",
     art: [
       [PAPER, "M 50,12 L 51,19 L 57,21 L 52,24 L 51,29 L 47,24 L 42,22 L 48,19 Z M 11,34 L 14,37 L 10,43 L 7,40 Z"],
-      [ORANGE, "M 22,23 L 29,18 L 29,12 L 34,6 L 38,13 L 38,19 L 44,24 L 48,45 Q 49,50 44,53 L 23,53 Q 17,52 17,46 Z", true],
-      [PAPER, "M 28,14 L 39,14 L 39,20 L 28,20 Z", true],
-      [PAPER, "M 21,29 L 44,29 L 46,46 L 19,46 Z"],
-      [INK, "M 34,30 L 27,39 L 32,39 L 30,46 L 40,36 L 34,36 L 37,30 Z"]
+      [PAPER, "M 24,13 H 41 V 19 H 46 L 43,48 Q 43,52 38,52 H 22 Q 17,52 18,47 L 21,20 H 24 Z", true],
+      [ORANGE, "M 22,34 H 42 L 40,48 H 21 Z"],
+      [INK, "M 34,22 L 25,35 L 31,35 L 28,45 L 39,31 L 33,31 L 37,22 Z"]
     ]
   },
   special: {
@@ -34895,7 +34900,17 @@ var stickerPaths = Object.fromEntries(Object.entries(stickers).map(([action, sti
   }
 ]));
 var utilityPaths = { pause: new Path2D(utility.pause), music: new Path2D(utility.music) };
-function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, music = true) {
+var captions = {
+  melee: "ATTACK",
+  jump: "JUMP",
+  dodge: "ROLL",
+  shoot: "SHOT",
+  charge: "CHARGE",
+  special: "SUPER",
+  assist: "ALLY"
+};
+var captionRibbon = new Path2D("M 5,3 L 64,0 L 58,17 L 0,20 Z");
+function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, music = true, caption = false) {
   ctx.save();
   ctx.translate(x, y + (down ? 2 : 0));
   const scale = size / 64 * (down ? 0.93 : 1);
@@ -34915,6 +34930,11 @@ function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, mus
   } else {
     const sticker = stickerPaths[action];
     const ready = (action === "special" || action === "charge") && progress >= 1;
+    ctx.save();
+    if (caption) {
+      ctx.translate(5, -2);
+      ctx.scale(0.84, 0.84);
+    }
     ctx.lineJoin = "round";
     ctx.strokeStyle = down || ready ? "#fff3c6" : "#10101b";
     ctx.lineWidth = down || ready ? 4 : 3;
@@ -34928,11 +34948,36 @@ function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, mus
       ctx.fill(part.path);
       if (part.outline) ctx.stroke(part.path);
     }
+    ctx.restore();
+    if (caption) {
+      const primary = action === "melee";
+      ctx.translate(primary ? 1 : 2, 44);
+      ctx.scale(primary ? 1 : 0.94, 1);
+      ctx.strokeStyle = INK;
+      ctx.lineWidth = primary ? 3.4 : 2.8;
+      ctx.lineJoin = "round";
+      ctx.fillStyle = primary ? "#ffd477" : "#261831";
+      ctx.stroke(captionRibbon);
+      ctx.fill(captionRibbon);
+      ctx.fillStyle = primary ? "#a84c50" : sticker.color;
+      ctx.fillRect(10, 4, 8, 1.6);
+      ctx.save();
+      ctx.translate(32, 10);
+      ctx.rotate(-0.052);
+      ctx.transform(1, 0, -0.16, 1, 0, 0);
+      ctx.font = primary ? '900 14px "Arial Black", system-ui, sans-serif' : "900 13px system-ui, sans-serif";
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillStyle = primary ? INK : ready ? PAPER : sticker.color;
+      ctx.fillText(captions[action], 0, 0, 53);
+      ctx.restore();
+    }
     if (action === "special" || action === "charge") {
-      ctx.fillStyle = "#24152d";
-      ctx.fillRect(20, 57, 24, 3.5);
+      const meterY = caption ? 19 : 57;
+      ctx.fillStyle = INK;
+      ctx.fillRect(16, meterY, 30, 3.8);
       ctx.fillStyle = ready ? PAPER : sticker.color;
-      ctx.fillRect(21, 58, 22 * progress, 1.5);
+      ctx.fillRect(17, meterY + 1, 28 * progress, 1.8);
     }
   }
   ctx.restore();
@@ -34959,16 +35004,16 @@ function layout() {
   const safe = game.kernel.opts.safe ?? { left: 0, right: 0, top: 0, bottom: 0 };
   const right = screen3.width - safe.right;
   const bottom = screen3.height - safe.bottom;
-  const roll = { action: "dodge", x: right - 153, y: bottom - 76, r: 27 };
+  const roll = { action: "dodge", x: right - 135, y: bottom - 57, r: 22 };
   const combat = [
-    { action: "melee", x: right - 74, y: bottom - 70, r: 40 },
-    { action: "jump", x: right - 32, y: bottom - 132, r: 23 },
+    { action: "melee", x: right - 72, y: bottom - 65, r: 34 },
+    { action: "jump", x: right - 25, y: bottom - 104, r: 20 },
     roll,
-    { action: "special", x: right - 104, y: bottom - 141, r: 25 },
-    { action: "charge", x: right - 176, y: bottom - 136, r: 22 },
-    { action: "shoot", x: right - 53, y: bottom - 192, r: 22 }
+    { action: "special", x: right - 84, y: bottom - 126, r: 23 },
+    { action: "charge", x: right - 141, y: bottom - 113, r: 20 },
+    { action: "shoot", x: right - 32, y: bottom - 156, r: 20 }
   ];
-  if (hasAlly) combat.push({ action: "assist", x: right - 166, y: bottom - 196, r: 22 });
+  if (hasAlly) combat.push({ action: "assist", x: right - 128, y: bottom - 164, r: 20 });
   const combatLeft = roll.x - combatHitRadius(roll);
   const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
   const utilityCenter = deterministicMath.min((safe.left + right) / 2, combatLeft - CONTROL_GAP - utilityHalfWidth);
@@ -34979,7 +35024,7 @@ function layout() {
   ];
 }
 function combatHitRadius(button) {
-  return deterministicMath.max(27, button.r + 2);
+  return deterministicMath.max(24, button.r + 2);
 }
 function release(id2, canceled) {
   const action = activePointers.get(id2);
@@ -35074,9 +35119,19 @@ var TouchButtons = class {
     surface.clear().draw((ctx) => {
       for (const button of buttons) {
         const progress = button.action === "special" ? meter / 100 : button.action === "charge" ? charge : 0;
-        const size = button.action === "melee" ? 84 : button.action === "pause" || button.action === "music" ? 64 : button.r * 2 + 5;
+        const size = button.action === "melee" ? 70 : button.action === "pause" || button.action === "music" ? 64 : button.r * 2 + 5;
         ctx.globalAlpha = button.opacity;
-        drawTouchGlyph(ctx, button.action, button.x, button.y, size, held.has(button.action), progress, music);
+        drawTouchGlyph(
+          ctx,
+          button.action,
+          button.x,
+          button.y,
+          size,
+          held.has(button.action),
+          progress,
+          music,
+          true
+        );
       }
       ctx.globalAlpha = 1;
     });
@@ -36927,7 +36982,7 @@ var DistrictBoss = class {
 };
 
 // game/hud.ts
-var GOLD2 = "#ffe070";
+var GOLD = "#ffe070";
 var WHITE2 = "#fff3e6";
 var MUTED = "#b7aacd";
 var PINK2 = "#ff75c4";
@@ -36978,7 +37033,7 @@ var Hud = class {
     top.rect(500, 8, 1, 34, "#493452");
     this.center(label("HEALTH", 52, 12, 8, WHITE2, "left"));
     this.center(label("SHOT", 52, 33, 8, CYAN, "left"));
-    this.center(label("SPECIAL", 147, 33, 8, GOLD2, "left"));
+    this.center(label("SPECIAL", 147, 33, 8, GOLD, "left"));
     this.center(label("ASSIST", 292, 40, 9, MUTED, "left"));
     this.center(label("SCORE", 512, 24, 8, MUTED, "left"));
     this.center(label(fighter.name.toUpperCase(), 619, 39, 8, fighter.color, "right"));
@@ -37036,9 +37091,9 @@ var Hud = class {
   banner = game.texture.create({ id: "stage-banner", layer: "hud", width: 390, height: 39, x: 320, y: 96 });
   route = game.texture.create({ id: "district-progress", layer: "hud", width: 194, height: 3, x: 389, y: 28 });
   routePixels = -1;
-  score = this.center(label("", 619, 23, 17, GOLD2, "right", 7, "mono-bold"));
+  score = this.center(label("", 619, 23, 17, GOLD, "right", 7, "mono-bold"));
   token = this.center(label("", 356, 40, 10, CYAN, "left"));
-  message = this.center(label("", 320, 96, 19, GOLD2, "center", 10));
+  message = this.center(label("", 320, 96, 19, GOLD, "center", 10));
   foot = this.center(label("", 320, 344, 11, WHITE2));
   bossLabel = this.center(label("", 320, 66, 10, "#ffd0b0"));
   hp;
@@ -38317,7 +38372,7 @@ var WorldMap = {
     const map = game.texture.create({ id: "snack-city-map", layer: "hud", width: 640, height: 360, x: 320, y: 180 });
     map.handle.z = 2;
     label("SNACK CITY", 28, 23, 23, WHITE2, "left", 8);
-    label(progress.cleared.length + " / 3 DISTRICTS SECURED", 606, 20, 10, GOLD2, "right", 8, "mono-bold");
+    label(progress.cleared.length + " / 3 DISTRICTS SECURED", 606, 20, 10, GOLD, "right", 8, "mono-bold");
     label("TITLE", 605, 37, 10, MUTED, "right", 8);
     const story = progress.complete ? "The relays are down. A message marked DOOM BURGER just came in." : CHAPTERS[progress.last]?.clear ?? "Follow the signal to the kitchen relay.";
     label(story, 29, 46, 11, "#e5c9ef", "left", 8);
@@ -38347,7 +38402,7 @@ var WorldMap = {
       const chapter = CHAPTERS[selected];
       const active2 = available.includes(selected);
       heading.text = chapter?.name ?? (selected === BONUS ? "After Hours" : "Snack City is safe");
-      heading.color = nodes2[selected]?.color ?? GOLD2;
+      heading.color = nodes2[selected]?.color ?? GOLD;
       briefing.text = chapter ? progress.cleared.includes(selected) ? chapter.clear : chapter.briefing : selected === BONUS ? active2 ? "Doom Burger is waiting on the old strip." : "Secure all three districts to unlock this fight." : "Bank your score and celebrate with the crew.";
       itinerary.text = chapter ? chapter.levels.map((level) => STAGES[level].title).join("  \u203A  ") : selected === BONUS ? "BOSS  /  DOOM BURGER" : "FINAL SCORE  /  " + String(progress.score).padStart(7, "0");
       if (chapter && !active2 && !progress.cleared.includes(selected)) briefing.text = "Defeat the Iron Oven to open this route.";
@@ -38717,7 +38772,7 @@ var Title = {
       { text: "Credits", action: () => openCredits("title") }
     ], 144, resume ? 201 : 204, 226, void 0, resume ? 28 : 32);
     type("HIGH SCORE", 606, 296, 10, "#f5c0c8", "right");
-    type(String(game.save.read("best", 0)).padStart(7, "0"), 606, 313, 16, GOLD2, "right", 14, "mono-bold");
+    type(String(game.save.read("best", 0)).padStart(7, "0"), 606, 313, 16, GOLD, "right", 14, "mono-bold");
     if (touchMode()) {
       type("Tap a menu item", 29, 342, 11, WHITE2);
       type("Turn your phone sideways to play", 606, 342, 11, WHITE2, "right");
@@ -38936,7 +38991,7 @@ var PROLOGUE = [
   },
   {
     card: "The Night Shift",
-    color: GOLD2,
+    color: GOLD,
     icon: "hero",
     width: 167,
     height: 125,
@@ -38947,7 +39002,7 @@ var Opening = {
   name: "opening",
   enter() {
     backdrop(0);
-    const next = type("", 320, 62, 36, GOLD2, "center");
+    const next = type("", 320, 62, 36, GOLD, "center");
     next.shadow = { color: "#66295d", x: 2, y: 3 };
     const line1 = type("", 320, 230, 16, PAPER2, "center", 14, "sans");
     const line2 = type("", 320, 254, 16, PAPER2, "center", 14, "sans");
@@ -39055,7 +39110,7 @@ var GameOver = {
       z: 4
     });
     type("Score", 283, 208, 12, MUTED, "right");
-    type(String(result.score).padStart(7, "0"), 298, 208, 19, GOLD2, "left", 14, "mono-bold");
+    type(String(result.score).padStart(7, "0"), 298, 208, 19, GOLD, "left", 14, "mono-bold");
     const choices = [{ text: "Retry Level", action: retryLevel }];
     if (inBonus()) choices.push({ text: "World Map", action: showWorldMap });
     choices.push({ text: "Title Screen", action: title });
