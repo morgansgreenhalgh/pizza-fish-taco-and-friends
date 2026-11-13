@@ -34837,6 +34837,11 @@ var BUTTON_ART = {
   }
 };
 var activePointers = /* @__PURE__ */ new Map();
+var UTILITY_RADIUS = 24;
+var UTILITY_HIT_PADDING = 11;
+var UTILITY_SPACING = 82;
+var ATTACK_HIT_PADDING = 5;
+var CONTROL_GAP = 12;
 var showing = false;
 var hasAlly = false;
 var canceledCharge = false;
@@ -34855,6 +34860,9 @@ function layout() {
   const bottom = screen3.height - safe.bottom;
   const low = bottom - 41;
   const upper = bottom - 94;
+  const rollLeft = x - gap * 2 - small - ATTACK_HIT_PADDING;
+  const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
+  const utilityCenter = deterministicMath.min((safe.left + right) / 2, rollLeft - CONTROL_GAP - utilityHalfWidth);
   const all = [
     { action: "melee", x, y: low, r, color: "#ffad74", text: "ATTACK" },
     { action: "jump", x: x - gap, y: low + 2, r: small, color: "#7beaff", text: "JUMP" },
@@ -34862,8 +34870,8 @@ function layout() {
     { action: "shoot", x, y: upper, r: small, color: "#8eb7ff", text: "SHOT" },
     { action: "charge", x: x - gap, y: upper, r: small, color: "#ffd68a", text: "CHARGE" },
     { action: "special", x: x - gap * 2, y: upper, r: small, color: "#ff87c6", text: "SUPER" },
-    { action: "pause", x: safe.left + 154, y: upper, r: 24, color: "#d4bff2", text: "PAUSE" },
-    { action: "music", x: safe.left + 154, y: low + 2, r: 24, color: "#d4bff2", text: "MUSIC" }
+    { action: "pause", x: utilityCenter - UTILITY_SPACING / 2, y: low + 2, r: UTILITY_RADIUS, color: "#d4bff2", text: "PAUSE" },
+    { action: "music", x: utilityCenter + UTILITY_SPACING / 2, y: low + 2, r: UTILITY_RADIUS, color: "#d4bff2", text: "MUSIC" }
   ];
   if (hasAlly) all.push({
     action: "assist",
@@ -34909,7 +34917,7 @@ function listenForTouchActions() {
     for (const button of layout()) {
       const utility = BUTTON_ART[button.action].utility;
       const distance3 = deterministicMath.max(
-        deterministicMath.abs(event.x - button.x) / (button.r + (utility ? 11 : 5)),
+        deterministicMath.abs(event.x - button.x) / (button.r + (utility ? UTILITY_HIT_PADDING : ATTACK_HIT_PADDING)),
         deterministicMath.abs(event.y - button.y) / (utility ? 21 : 26)
       );
       if (distance3 <= 1 && distance3 < score) {
