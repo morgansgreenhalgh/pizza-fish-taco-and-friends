@@ -5274,10 +5274,10 @@ var KernelAssets = class {
       }
       case "font": {
         if (!fetchImpl || typeof FontFace === "undefined" || typeof document === "undefined") return null;
-        const face = new FontFace(it.family, `url(${it.url})`);
-        await face.load();
-        document.fonts.add(face);
-        return face;
+        const face2 = new FontFace(it.family, `url(${it.url})`);
+        await face2.load();
+        document.fonts.add(face2);
+        return face2;
       }
     }
   }
@@ -15661,12 +15661,12 @@ function createFace(api, source, size) {
   };
 }
 function createLabel(api, spec, defaultFace) {
-  const face = spec.font ?? defaultFace;
+  const face2 = spec.font ?? defaultFace;
   let content = spec.text, x = spec.x, y = spec.y, scale = spec.scale ?? 1, tint = spec.tint ?? "#ffffff";
   let outline = spec.outline ?? null, shadow = spec.shadow ?? null;
   const hex2 = (c) => /^#[0-9a-f]{3,4}$/i.test(c) ? "#" + [...c.slice(1)].map((d) => d + d).join("") : c;
   const style = () => ({
-    fontSize: face.size * scale,
+    fontSize: face2.size * scale,
     color: hex2(tint),
     lineHeight: 1.3,
     letterSpacing: (spec.spacing ?? 0) * scale,
@@ -15674,7 +15674,7 @@ function createLabel(api, spec, defaultFace) {
     ...shadow ? { shadow: { color: hex2(shadow.color), offset: [shadow.x * scale, shadow.y * scale] } } : {}
   });
   const shaped = (v) => v === "" ? " " : v;
-  const paragraph = api.write({ font: face.font, text: shaped(content), x, y, style: style(), ...spec.layer ? { layer: spec.layer } : {}, ...spec.z === void 0 ? {} : { z: spec.z } });
+  const paragraph = api.write({ font: face2.font, text: shaped(content), x, y, style: style(), ...spec.layer ? { layer: spec.layer } : {}, ...spec.z === void 0 ? {} : { z: spec.z } });
   const h = paragraph.object;
   let shown = true;
   const show2 = () => {
@@ -15689,7 +15689,7 @@ function createLabel(api, spec, defaultFace) {
   show2();
   h.alpha = spec.alpha ?? 1;
   h.snap();
-  if (!face.loaded) void face.ready.then(() => {
+  if (!face2.loaded) void face2.ready.then(() => {
     if (!paragraph.disposed) place();
   }, () => {
   });
@@ -26902,38 +26902,38 @@ function createFontFace(library, source, config = {}) {
     aggregatePromise: void 0,
     aggregateLoaded: false
   };
-  let face;
+  let face2;
   const defaultFormat = formats2[0];
   const base = {
     family,
     format: defaultFormat,
     get face() {
-      return face;
+      return face2;
     },
     get default() {
-      return face;
+      return face2;
     },
     get disposed() {
       return owner.disposed;
     },
     load() {
-      return loadFontFace(face);
+      return loadFontFace(face2);
     },
     formats() {
-      return fontFaceFormats(face);
+      return fontFaceFormats(face2);
     },
     isLoaded() {
-      return isFontFaceLoaded(face);
+      return isFontFaceLoaded(face2);
     },
     clone() {
-      return cloneFontFace(face);
+      return cloneFontFace(face2);
     },
     dispose() {
-      disposeFontFace(face);
+      disposeFontFace(face2);
     }
   };
-  face = base;
-  faceStates.set(face, { face: state, format: defaultFormat, aggregate: true, promises: /* @__PURE__ */ new Map() });
+  face2 = base;
+  faceStates.set(face2, { face: state, format: defaultFormat, aggregate: true, promises: /* @__PURE__ */ new Map() });
   for (const format of formats2) {
     const key = formatName(format);
     if (selections2.has(key)) throw new TypeError(`FontFace format ${JSON.stringify(key)} is declared more than once`);
@@ -26941,7 +26941,7 @@ function createFontFace(library, source, config = {}) {
     selection = Object.freeze({
       family,
       format,
-      face,
+      face: face2,
       load() {
         return loadDeclaredFontFaceSelection(selection);
       },
@@ -26958,24 +26958,24 @@ function createFontFace(library, source, config = {}) {
   }
   Object.freeze(base);
   const generation = nextCatalogGeneration++;
-  catalog.set(family, { generation, face: new WeakRef(face) });
-  faceFinalizer.register(face, { family, generation, owner }, face);
-  return face;
+  catalog.set(family, { generation, face: new WeakRef(face2) });
+  faceFinalizer.register(face2, { family, generation, owner }, face2);
+  return face2;
 }
-function disposeFontFace(face) {
-  if (typeof face !== "object" && typeof face !== "function" || face === null) {
+function disposeFontFace(face2) {
+  if (typeof face2 !== "object" && typeof face2 !== "function" || face2 === null) {
     throw new TypeError("FontFace.dispose() requires an authentic FontFace declaration");
   }
-  const selection = faceStates.get(face);
+  const selection = faceStates.get(face2);
   if (selection === void 0) throw new TypeError("FontFace.dispose() requires an authentic FontFace declaration");
-  if (selection.format !== face.format || selection.face.family !== face.family) {
+  if (selection.format !== face2.format || selection.face.family !== face2.family) {
     throw new TypeError("FontFace.dispose() must be called on the declaration, not a format selection");
   }
   if (selection.face.owner.disposed) return;
-  faceFinalizer.unregister(face);
+  faceFinalizer.unregister(face2);
   disposeFontFaceState(selection.face);
   const current = catalog.get(selection.face.family);
-  if (current?.face.deref() === face) catalog.delete(selection.face.family);
+  if (current?.face.deref() === face2) catalog.delete(selection.face.family);
 }
 function fontFaceSelectionState(selection) {
   if (typeof selection !== "object" && typeof selection !== "function" || selection === null) {
@@ -27054,8 +27054,8 @@ var FontFaceHandleStore = class {
     if (this.#disposed) throw new Error("font handle store has been disposed");
   }
 };
-function loadFontFace(face) {
-  const selection = fontFaceSelectionState(face);
+function loadFontFace(face2) {
+  const selection = fontFaceSelectionState(face2);
   const state = selection.face;
   if (!selection.aggregate) throw new TypeError("FontFace aggregate loading requires the declaration object");
   if (state.aggregatePromise !== void 0) return state.aggregatePromise;
@@ -27066,7 +27066,7 @@ function loadFontFace(face) {
         throw new DOMException("FontFace load owner was disposed", "AbortError");
       }
       state.aggregateLoaded = true;
-      return face;
+      return face2;
     },
     (error) => {
       if (state.aggregatePromise === promise) {
@@ -27207,8 +27207,8 @@ function createLoadedFaceRecord(owner, family, library, fontSource, raster, form
   record2 = { promise, font: void 0 };
   return record2;
 }
-function fontFaceFormats(face) {
-  const selected = fontFaceSelectionState(face);
+function fontFaceFormats(face2) {
+  const selected = fontFaceSelectionState(face2);
   if (!selected.aggregate) throw new TypeError("FontFace format inspection requires the declaration object");
   const state = selected.face;
   if (state.formatsPromise !== void 0) return state.formatsPromise;
@@ -27252,8 +27252,8 @@ function openDeclaredFontFaceSource(library, source, initialRasters, signal) {
   if (isSerializedFontFace(source)) return openSerializedFontFaceSource(library, source, { signal });
   return fontFaceLoadInput(source).then((input) => openFontFaceSource(library, input, initialRasters, { signal }));
 }
-function isFontFaceLoaded(face) {
-  const selected = fontFaceSelectionState(face);
+function isFontFaceLoaded(face2) {
+  const selected = fontFaceSelectionState(face2);
   if (!selected.aggregate) return false;
   return selected.face.aggregateLoaded;
 }
@@ -29263,24 +29263,24 @@ function typography2(options = {}) {
             }
           }
           const selected = selectFormat(format);
-          const face = typography.fontFace(
+          const face2 = typography.fontFace(
             source instanceof ArrayBuffer ? new Blob([source], {
               type: new DataView(source).getUint32(0) === 1735152710 ? "model/gltf-binary" : "font/ttf"
             }) : source,
             { format: selected }
           );
           try {
-            await face.load();
+            await face2.load();
           } catch (error) {
-            face.dispose();
+            face2.dispose();
             throw error;
           }
           if (disposed) {
-            face.dispose();
+            face2.dispose();
             throw new Error("Typography disposed while loading a font");
           }
-          const font = getRoot().fonts.acquire(face);
-          faces.add(face);
+          const font = getRoot().fonts.acquire(face2);
+          faces.add(face2);
           fonts.add(font);
           return font;
         },
@@ -29700,7 +29700,7 @@ function typography2(options = {}) {
         root = void 0;
         for (const font of fonts) font.dispose();
         fonts.clear();
-        for (const face of faces) face.dispose();
+        for (const face2 of faces) face2.dispose();
         faces.clear();
         disposeNative();
       });
@@ -32401,13 +32401,13 @@ function paintStops(p, where = "fill") {
     num(s, `${where}.stops[${i}]`, 0, 1);
     if (i && s < stops[i - 1]) fail2(`${where}.stops must ascend, got ${stops.join(", ")}`);
   });
-  const colors = cs.map((c) => rgba(c));
-  while (colors.length < 4) {
-    colors.push(colors[colors.length - 1]);
+  const colors2 = cs.map((c) => rgba(c));
+  while (colors2.length < 4) {
+    colors2.push(colors2[colors2.length - 1]);
     stops.push(stops[stops.length - 1]);
   }
   const along = p.along === "track" ? 1 : p.along === "fill" ? 2 : p.along === void 0 || p.along === "across" ? 0 : fail2(`${where}.along must be 'across', 'track' or 'fill', got ${String(p.along)}`);
-  return { colors, stops, count: n, along };
+  return { colors: colors2, stops, count: n, along };
 }
 function mixPaint(a, b, k) {
   const m = (x, y) => x + (y - x) * k;
@@ -32612,12 +32612,12 @@ function bars(options = {}) {
       const faces = /* @__PURE__ */ new Map();
       const faceFor = (family, size) => {
         const key = `${family}|${size}`;
-        let face = faces.get(key);
-        if (!face) {
-          face = typography3.face({ family, size });
-          faces.set(key, face);
+        let face2 = faces.get(key);
+        if (!face2) {
+          face2 = typography3.face({ family, size });
+          faces.set(key, face2);
         }
-        return face;
+        return face2;
       };
       k.hooks.on("boot.domReady", async () => {
         await typography3.prepare([...familiesWanted]);
@@ -33172,21 +33172,21 @@ function bars(options = {}) {
           const cross2 = this.cross(at.w, at.h);
           const size = look.size ?? (inside ? this.ring && pos === "center" ? deterministicMath.max(10, deterministicMath.round((deterministicMath.min(at.w, at.h) / 2 - this.band(at.w, at.h)) * 0.62)) : deterministicMath.max(9, deterministicMath.round(cross2 * 0.6)) : 15);
           const family = look.family ?? defaultFamily, faceKey = spec.font ? "own" : `${family}|${size}`;
-          const face = spec.font ?? faceFor(family, size);
-          if (faceKey !== this.labelFaceKey || face !== this.labelFace) {
+          const face2 = spec.font ?? faceFor(family, size);
+          if (faceKey !== this.labelFaceKey || face2 !== this.labelFace) {
             this.dropLabels();
             this.labelFaceKey = faceKey;
-            this.labelFace = face;
+            this.labelFace = face2;
           }
           const scale = spec.font && look.size ? look.size / spec.font.size : 1;
           const text2 = this.formatText();
           this.lastText = text2;
           const color2 = fl.labelColor ?? look.color ?? "#ffffff", fillColor = look.fillColor ?? color2;
-          const outline = look.outline === false ? null : { color: look.outline ?? "#000000b0", width: face.size * scale * (look.outlineWidth ?? 0.08) };
+          const outline = look.outline === false ? null : { color: look.outline ?? "#000000b0", width: face2.size * scale * (look.outlineWidth ?? 0.08) };
           const geo = this.edgeGeometry(at);
           const twoTone = fillColor !== color2 && inside && !this.ring && this.dirCode < 4 && deterministicMath.abs(at.rot) < 1e-4;
           const make = () => {
-            const lab = typography3.label({ text: text2, x: at.x, y: at.y, font: face, tint: color2, scale, layer: this.handle.layer, z: this.handle.z + 0.01, ...outline ? { outline } : {} });
+            const lab = typography3.label({ text: text2, x: at.x, y: at.y, font: face2, tint: color2, scale, layer: this.handle.layer, z: this.handle.z + 0.01, ...outline ? { outline } : {} });
             lab.object.snap();
             return lab;
           };
@@ -34809,178 +34809,339 @@ var ViewportTexture = class {
 };
 
 // game/touch-art.ts
-var INK = "#24152d";
-var PAPER = "#fff2c7";
-var ORANGE = "#ff8f61";
-var PINK = "#ff86a7";
-var MINT = "#8df6d5";
-var BLUE = "#70baff";
-var stickers = {
-  melee: {
-    color: "#ffb96f",
-    backing: "M 8,40 C 1,25 14,13 28,11 C 39,9 49,3 57,9 C 65,16 60,26 63,36 C 67,49 52,52 43,55 C 29,61 15,57 8,40 Z",
-    art: [
-      [PINK, "M 43,23 L 50,7 L 53,17 L 63,13 L 59,24 L 66,28 L 56,33 L 58,43 L 47,36 Z"],
-      [PAPER, "M 7,26 L 20,22 L 16,26 L 3,30 Z M 3,38 L 15,34 L 12,39 L 0,42 Z M 11,47 L 23,41 L 20,47 L 9,50 Z"],
-      [PAPER, "M 13,35 L 25,29 Q 26,24 31,20 L 39,15 Q 44,12 46,17 Q 50,14 53,19 Q 57,18 59,23 Q 62,24 61,29 L 56,38 Q 53,43 43,44 L 35,45 L 24,52 Z", true],
-      [ORANGE, "M 17,34 L 26,30 L 35,45 L 24,51 Z", true],
-      [INK, "M 31,30 Q 33,25 40,26 L 45,29 L 43,31 L 38,29 Z M 43,21 L 45,17 L 47,18 L 45,23 Z M 49,23 L 52,19 L 54,20 L 51,25 Z M 54,27 L 57,23 L 59,24 L 56,29 Z"],
-      [ORANGE, "M 36,39 L 48,36 L 57,31 L 54,37 Q 51,41 39,42 Z"]
-    ]
-  },
-  jump: {
-    color: "#9af3e3",
-    backing: "M 7,41 Q 3,29 15,18 Q 25,8 46,10 Q 60,11 60,26 Q 58,43 44,52 Q 23,61 12,51 Z",
-    art: [
-      [PAPER, "M 13,32 L 32,10 L 51,32 L 41,32 L 41,45 L 23,45 L 23,32 Z", true],
-      [MINT, "M 15,31 L 32,11 L 48,30 L 40,30 L 32,21 L 23,31 Z"],
-      [INK, "M 24,49 H 40 V 52 H 24 Z"]
-    ]
-  },
-  dodge: {
-    color: "#cbb2ff",
-    backing: "M 6,33 Q 10,19 25,15 Q 43,7 56,18 Q 65,27 60,39 Q 56,55 32,55 Q 11,53 6,42 Z",
-    art: [
-      [PAPER, "M 4,32 L 21,25 L 17,30 L 5,35 Z M 1,41 L 20,34 L 17,39 L 4,44 Z M 9,47 L 21,43 L 18,48 L 10,50 Z"],
-      [PAPER, "M 20,37 Q 17,21 31,16 Q 42,12 50,20 Q 60,30 53,42 L 58,44 L 43,51 L 42,35 L 47,38 Q 52,28 44,23 Q 33,17 27,28 L 25,37 Z", true],
-      [PINK, "M 29,39 L 36,30 L 37,41 L 31,45 Z"]
-    ]
-  },
-  shoot: {
-    color: "#8fd4ff",
-    backing: "M 5,35 Q 5,23 22,16 Q 36,7 51,13 Q 63,19 59,35 Q 54,51 33,52 Q 14,56 5,43 Z",
-    art: [
-      [PAPER, "M 5,24 L 24,22 L 18,27 L 1,28 Z M 4,37 L 24,31 L 19,37 L 2,42 Z M 10,46 L 28,39 L 23,45 L 9,50 Z"],
-      [PAPER, "M 19,23 L 41,17 Q 50,17 60,23 Q 57,34 47,38 L 26,44 L 31,34 L 19,34 L 25,27 Z", true],
-      [BLUE, "M 28,34 L 46,27 L 57,23 Q 56,32 47,37 L 28,42 Z"],
-      [INK, "M 42,19 L 46,18 L 52,34 L 48,36 Z"]
-    ]
-  },
-  charge: {
-    color: "#ffc16f",
-    backing: "M 15,13 Q 25,6 39,9 Q 56,11 57,28 Q 60,44 48,53 Q 29,58 17,52 Q 6,45 9,30 Z",
-    art: [
-      [PAPER, "M 50,12 L 51,19 L 57,21 L 52,24 L 51,29 L 47,24 L 42,22 L 48,19 Z M 11,34 L 14,37 L 10,43 L 7,40 Z"],
-      [PAPER, "M 24,13 H 41 V 19 H 46 L 43,48 Q 43,52 38,52 H 22 Q 17,52 18,47 L 21,20 H 24 Z", true],
-      [ORANGE, "M 22,34 H 42 L 40,48 H 21 Z"],
-      [INK, "M 34,22 L 25,35 L 31,35 L 28,45 L 39,31 L 33,31 L 37,22 Z"]
-    ]
-  },
-  special: {
-    color: "#ef9df1",
-    backing: "M 8,37 Q 4,25 13,16 Q 23,6 38,9 Q 52,8 59,20 Q 66,32 56,47 Q 49,58 31,55 Q 15,56 8,44 Z",
-    art: [
-      [PAPER, "M 31,7 L 37,17 L 48,12 L 48,23 L 60,26 L 51,34 L 55,45 L 44,43 L 40,54 L 32,46 L 22,52 L 21,41 L 9,40 L 17,31 L 10,22 L 23,21 Z", true],
-      [PINK, "M 33,17 L 39,24 L 48,22 L 46,29 L 52,34 L 44,36 L 43,44 L 36,40 L 29,45 L 28,37 L 20,36 L 25,30 L 23,23 L 30,24 Z"],
-      [INK, "M 37,19 L 28,33 L 34,33 L 30,43 L 45,29 L 37,29 L 41,19 Z"]
-    ]
-  },
-  assist: {
-    color: "#94ebbb",
-    backing: "M 5,37 Q 2,22 15,15 Q 25,9 37,13 Q 47,7 56,12 Q 65,22 58,39 Q 53,53 38,54 Q 18,57 8,46 Z",
-    art: [
-      [ORANGE, "M 9,30 Q 11,17 25,16 Q 39,15 43,28 L 42,44 Q 38,51 24,51 Q 11,51 8,43 Z", true],
-      [PAPER, "M 18,22 L 23,20 L 24,22 L 20,24 Z M 29,21 L 34,21 L 35,23 L 30,24 Z"],
-      [INK, "M 9,28 Q 26,33 43,27 L 43,43 Q 23,47 8,41 Z"],
-      [MINT, "M 10,32 L 17,32 L 20,35 L 27,32 L 32,34 L 42,31 L 41,36 L 33,39 L 27,37 L 20,40 L 15,37 L 9,38 Z"],
-      [PAPER, "M 46,15 L 52,15 L 52,22 L 59,22 L 59,28 L 52,28 L 52,35 L 46,35 L 46,28 L 39,28 L 39,22 L 46,22 Z", true]
-    ]
+var INK = "#170f23";
+var PAPER = "#fff0c6";
+var colors = {
+  melee: ["#ffc34c", "#a4354e", "ATTACK"],
+  jump: ["#69f3d7", "#205e74", "JUMP"],
+  dodge: ["#cba8ff", "#614187", "ROLL"],
+  shoot: ["#78c9ff", "#274d88", "SHOT"],
+  charge: ["#ffb45b", "#8b493f", "CHARGE"],
+  special: ["#ff8ac4", "#7b365e", "SUPER"],
+  assist: ["#9af096", "#30634d", "ALLY"]
+};
+var letters = {
+  A: "010/101/111/101/101",
+  C: "111/100/100/100/111",
+  E: "111/100/110/100/111",
+  G: "111/100/101/101/111",
+  H: "101/101/111/101/101",
+  I: "111/010/010/010/111",
+  J: "001/001/001/101/111",
+  K: "101/110/100/110/101",
+  L: "100/100/100/100/111",
+  M: "101/111/111/101/101",
+  O: "111/101/101/101/111",
+  P: "111/101/111/100/100",
+  R: "110/101/110/101/101",
+  S: "111/100/111/001/111",
+  T: "111/010/010/010/010",
+  U: "101/101/101/101/111",
+  Y: "101/101/010/010/010"
+};
+var paintPixels = (ctx, x, y, rows, palette) => {
+  for (const [dy, row] of rows.entries()) {
+    for (let dx = 0; dx < row.length; dx++) {
+      const color2 = palette[row[dx]];
+      if (color2) {
+        ctx.fillStyle = color2;
+        ctx.fillRect(x + dx, y + dy, 1, 1);
+      }
+    }
   }
 };
-var utility = {
-  pause: "M 25,21 H 30 V 43 H 25 Z M 34,21 H 39 V 43 H 34 Z",
-  music: "M 30,23 L 43,20 V 35 C 43,43 31,44 32,38 Q 33,33 39,34 V 26 L 33,28 V 40 C 33,47 22,48 22,42 Q 23,37 30,38 Z"
+var icons = {
+  melee: [
+    ".........yy.....",
+    "........yyyy....",
+    ".......yypyyy...",
+    "....y..yppppyy..",
+    "...yyy.ypppppy..",
+    "..yypy.ypppppy..",
+    "..yppyyyypppy...",
+    ".yppppppppyya...",
+    ".yppppppyyaa....",
+    ".ypppppyaaa.....",
+    "..yppyyaaa......",
+    "..ayyaaa........",
+    "...aaaa........."
+  ],
+  jump: [
+    ".......pp.......",
+    "......pppp......",
+    ".....ppggpp.....",
+    "....ppggggpp....",
+    "...ppggggggpp...",
+    "..ppppggggpppp..",
+    ".....pggggp.....",
+    ".....pggggp.....",
+    "..g..pggggp..g..",
+    "..g..pppppp..g..",
+    "......gggg......",
+    "....gg....gg....",
+    "...gg......gg..."
+  ],
+  dodge: [
+    ".....ppppp......",
+    "...pppgggppp....",
+    "..ppgg....gpp...",
+    "..pg........pg..",
+    ".pp....gg...gpp.",
+    ".pg...gpp...gpp.",
+    ".pg...pp....gpp.",
+    ".pg........ggppp",
+    "..pg....gggpppp.",
+    "..pg.....gpppp..",
+    "...pp....gppp...",
+    ".....p...gpp....",
+    ".........gp....."
+  ],
+  shoot: [
+    "...........ppp..",
+    "..........ppppp.",
+    ".....ggg.ppppppp",
+    "...ggggggppggppp",
+    ".gggggggggppgppp",
+    "...gggggggpppppp",
+    "......ggg.ppppp.",
+    "...gggg....ppp..",
+    ".gggggg.........",
+    "................",
+    "......gggg......",
+    "....gggg........"
+  ],
+  charge: [
+    ".......pp.......",
+    ".......pp.......",
+    "....pppppppp....",
+    "....pggggggp....",
+    "....pggpgggp....",
+    "....pgppgggp....",
+    "....pppppggp....",
+    "....pggppggp....",
+    "....pggpgggp....",
+    "....pggggggp....",
+    "....pppppppp....",
+    "..g..........g.."
+  ],
+  special: [
+    ".......pp.......",
+    "......pgp.......",
+    "...p..pgp...p...",
+    "..pgppggppppgp..",
+    "...pggggggggp...",
+    ".pppggppggggppp.",
+    "pgggggpppgggggp.",
+    ".ppggggppgggpp..",
+    "...pgggppggp....",
+    "..pgppgp.ppgp...",
+    "...p.pgp....p...",
+    "......pp........"
+  ],
+  assist: [
+    ".....pppp.......",
+    "....ppggpp......",
+    "....pggggp..p...",
+    "....pggggp..p...",
+    "....ppggppppppp.",
+    ".....pppp...p...",
+    "...ppggggpp.p...",
+    "..ppggggggpp....",
+    "..pggggggggp....",
+    "..pppppppppp...."
+  ]
 };
-var stickerPaths = Object.fromEntries(Object.entries(stickers).map(([action, sticker]) => [
-  action,
-  {
-    color: sticker.color,
-    backing: new Path2D(sticker.backing),
-    art: sticker.art.map(([color2, path, outline]) => ({ color: color2, path: new Path2D(path), outline }))
-  }
-]));
-var utilityPaths = { pause: new Path2D(utility.pause), music: new Path2D(utility.music) };
-var captions = {
-  melee: "ATTACK",
-  jump: "JUMP",
-  dodge: "ROLL",
-  shoot: "SHOT",
-  charge: "CHARGE",
-  special: "SUPER",
-  assist: "ALLY"
-};
-var captionRibbon = new Path2D("M 5,3 L 64,0 L 58,17 L 0,20 Z");
-function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, music = true, caption = false) {
+var face = [
+  ".......pppppppppppp.......",
+  ".....ppggggggggggggpp.....",
+  "....pggggggggggggggggp....",
+  "...pgggsddddddddddsgggp...",
+  "..pggsddddddddddddddsggp..",
+  ".pggsddddddddddddddddsggp.",
+  ".pgsddddddddddddddddddsgp.",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  "pgsddddddddddddddddddddsgp",
+  ".pgsddddddddddddddddddsgp.",
+  ".pssddddddddddddddddddssp.",
+  "..pssddddddddddddddddssp..",
+  "...pssssssssssssssssssp...",
+  "....pssssssssssssssssp....",
+  ".....ppsssssssssssspp.....",
+  ".......pppppppppppp......."
+];
+function isCombatTouchAction(action) {
+  return action !== "pause" && action !== "music";
+}
+function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, music = true, portrait2 = false) {
   ctx.save();
-  ctx.translate(x, y + (down ? 2 : 0));
-  const scale = size / 64 * (down ? 0.93 : 1);
+  ctx.translate(deterministicMath.round(x), deterministicMath.round(y) + (down ? 2 : 0));
+  const scale = size / 26 * (down ? 0.94 : 1);
   ctx.scale(scale, scale);
-  ctx.translate(-32, -32);
-  if (action === "pause" || action === "music") {
-    ctx.fillStyle = down ? "#fff2c7" : "#d3bcdc";
-    ctx.fill(utilityPaths[action]);
-    if (action === "music" && !music) {
-      ctx.strokeStyle = "#ff86a7";
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      ctx.moveTo(21, 44);
-      ctx.lineTo(44, 20);
-      ctx.stroke();
-    }
-  } else {
-    const sticker = stickerPaths[action];
-    const ready = (action === "special" || action === "charge") && progress >= 1;
-    ctx.save();
-    if (caption) {
-      ctx.translate(5, -2);
-      ctx.scale(0.84, 0.84);
-    }
-    ctx.lineJoin = "round";
-    ctx.strokeStyle = down || ready ? "#fff3c6" : "#10101b";
-    ctx.lineWidth = down || ready ? 4 : 3;
-    ctx.stroke(sticker.backing);
-    ctx.fillStyle = down || ready ? "#fff3c6" : sticker.color + (action === "special" ? "a8" : "e8");
-    ctx.fill(sticker.backing);
-    ctx.lineWidth = 2.4;
-    ctx.strokeStyle = INK;
-    for (const part of sticker.art) {
-      ctx.fillStyle = part.color;
-      ctx.fill(part.path);
-      if (part.outline) ctx.stroke(part.path);
+  if (!isCombatTouchAction(action)) {
+    ctx.fillStyle = down ? PAPER : "#e1c4f4";
+    if (action === "pause") {
+      ctx.fillRect(-4.5, -4.5, 3, 9);
+      ctx.fillRect(1.5, -4.5, 3, 9);
+    } else {
+      paintPixels(ctx, -5, -5, [
+        ".....pppp",
+        "....ppppp",
+        "....p...p",
+        "....p...p",
+        "....p...p",
+        "....p.ppp",
+        "..ppp.ppp",
+        ".pppp....",
+        ".ppp....."
+      ], { p: down ? PAPER : "#e1c4f4" });
+      if (!music) paintPixels(ctx, -5, -5, [
+        ".......xx",
+        "......xx.",
+        ".....xx..",
+        "....xx...",
+        "...xx....",
+        "..xx.....",
+        ".xx......",
+        "xx......."
+      ], { x: "#ff749c" });
     }
     ctx.restore();
-    if (caption) {
-      const primary = action === "melee";
-      ctx.translate(primary ? 1 : 2, 44);
-      ctx.scale(primary ? 1 : 0.94, 1);
-      ctx.strokeStyle = INK;
-      ctx.lineWidth = primary ? 3.4 : 2.8;
-      ctx.lineJoin = "round";
-      ctx.fillStyle = primary ? "#ffd477" : "#261831";
-      ctx.stroke(captionRibbon);
-      ctx.fill(captionRibbon);
-      ctx.fillStyle = primary ? "#a84c50" : sticker.color;
-      ctx.fillRect(10, 4, 8, 1.6);
-      ctx.save();
-      ctx.translate(32, 10);
-      ctx.rotate(-0.052);
-      ctx.transform(1, 0, -0.16, 1, 0, 0);
-      ctx.font = primary ? '900 14px "Arial Black", system-ui, sans-serif' : "900 13px system-ui, sans-serif";
-      ctx.textAlign = "center";
-      ctx.textBaseline = "middle";
-      ctx.fillStyle = primary ? INK : ready ? PAPER : sticker.color;
-      ctx.fillText(captions[action], 0, 0, 53);
-      ctx.restore();
-    }
-    if (action === "special" || action === "charge") {
-      const meterY = caption ? 19 : 57;
-      ctx.fillStyle = INK;
-      ctx.fillRect(16, meterY, 30, 3.8);
-      ctx.fillStyle = ready ? PAPER : sticker.color;
-      ctx.fillRect(17, meterY + 1, 28 * progress, 1.8);
-    }
+    return;
+  }
+  const [color2, shadow] = colors[action];
+  const ready = progress >= 1;
+  const lit = down || ready;
+  paintPixels(ctx, -13, -12, face, {
+    p: INK,
+    g: lit ? PAPER : color2,
+    s: lit ? color2 : shadow,
+    d: lit ? shadow : "#251a36"
+  });
+  if (!portrait2) paintPixels(ctx, -8, -6, icons[action], { p: PAPER, g: color2, y: PAPER, a: "#ff8551" });
+  if (action === "special" || action === "charge") {
+    ctx.fillStyle = INK;
+    ctx.fillRect(-8, 8, 16, 2);
+    ctx.fillStyle = ready ? PAPER : color2;
+    ctx.fillRect(-7, 8, deterministicMath.round(14 * progress), 1);
   }
   ctx.restore();
+}
+function drawPaperLabel(ctx, action, x, y, wear, fall) {
+  const [color2, shadow, text2] = colors[action];
+  const scale = action === "melee" ? 1.9 : 1.5;
+  const width = text2.length * 4 + 5;
+  ctx.save();
+  if (fall > 0 && fall < 0.55) {
+    ctx.globalAlpha *= 1 - fall / 0.55;
+    ctx.fillStyle = color2;
+    ctx.fillRect(deterministicMath.round(x - 13 - fall * 23), deterministicMath.round(y - 17 * fall), 2, 2);
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(deterministicMath.round(x + 19 + fall * 30), deterministicMath.round(y - 26 * fall), 3, 2);
+    ctx.fillRect(deterministicMath.round(x + 7 + fall * 40), deterministicMath.round(y + 12 * fall), 2, 2);
+    ctx.restore();
+    ctx.save();
+  }
+  ctx.translate(deterministicMath.round(x + 14 * fall), deterministicMath.round(y - 23 * fall + 89 * fall * fall));
+  ctx.rotate(-0.12 + wear * 0.1 + fall * 1.65);
+  ctx.globalAlpha *= deterministicMath.min(1, (1 - fall) * 3);
+  ctx.scale(scale, scale * (1 - fall * 0.43));
+  ctx.translate(-width / 2, -4.5);
+  const notch = deterministicMath.floor(wear * 3);
+  ctx.beginPath();
+  ctx.moveTo(0, 0);
+  ctx.lineTo(width - notch, 0);
+  ctx.lineTo(width - notch, notch);
+  ctx.lineTo(width, notch);
+  ctx.lineTo(width, 10);
+  ctx.lineTo(0, 10);
+  ctx.closePath();
+  ctx.clip();
+  ctx.fillStyle = INK;
+  ctx.fillRect(0, 1, width, 8);
+  ctx.fillRect(2, 0, width - 4, 10);
+  ctx.fillStyle = shadow;
+  ctx.fillRect(1, 2, width - 2, 6);
+  ctx.fillRect(2, 8, width - 4, 1);
+  ctx.fillStyle = color2;
+  ctx.fillRect(1, 1, width - 2, 6);
+  ctx.fillRect(3, 0, width - 6, 1);
+  ctx.fillStyle = PAPER;
+  ctx.fillRect(3, 1, width - 7, 1);
+  for (const [index, letter] of [...text2].entries()) {
+    paintPixels(ctx, 3 + index * 4, 2, letters[letter].split("/"), { "1": INK });
+  }
+  if (wear > 0) {
+    ctx.fillStyle = PAPER;
+    ctx.fillRect(width - 2, 1, 2, 2 + deterministicMath.floor(wear * 4));
+    ctx.fillStyle = shadow;
+    ctx.fillRect(1 + deterministicMath.floor(wear * 2), 7, 2 + deterministicMath.floor(wear * 4), 1);
+    ctx.fillRect(width - 4, 8, 2, 1);
+  }
+  ctx.restore();
+}
+
+// game/fighter-animation.ts
+var MOVES = ["jab", "cross", "heel", "finisher", "shoot"];
+var TACO_ROLL = [40, 62, 41, 42, 43, 44, 45, 63];
+var ROLL_TIME = 0.245;
+var RELEASE_FRAME = { blast: 2, dash: 4, bounce: 2, flame: 4, syrup: 6, shield: 3 };
+var frameAt = (start, count, progress) => start + deterministicMath.min(count - 1, deterministicMath.max(0, deterministicMath.floor(count * progress)));
+function fighterIdleFrame(fighter, age) {
+  return fighter === DEFAULT_FIGHTER ? [0, 32, 32, 0, 33, 33, 0, 55][deterministicMath.floor(age * fighter.motion.idle) % 8] : 40 + deterministicMath.floor(age * fighter.motion.idle) % 12;
+}
+function fighterVictoryFrame(fighter, age) {
+  return fighter === DEFAULT_FIGHTER ? [20, 54, 21, 55][deterministicMath.floor(age * 7) % 4] : 168 + deterministicMath.floor(age * 8) % 8;
+}
+function fighterFrame(fighter, pose, state) {
+  const { age, stride, airTime, lift, attack, charge } = state;
+  const taco = fighter === DEFAULT_FIGHTER;
+  if (attack) {
+    const move = pose;
+    const recovery = (age - attack.windup) / (attack.length - attack.windup);
+    const start = taco ? 88 + 8 * MOVES.indexOf(move) : 82 + 10 * MOVES.indexOf(move);
+    return recovery < 0 ? frameAt(start, 3, age / attack.windup) : frameAt(start + 3, taco ? 5 : 7, recovery);
+  }
+  switch (pose) {
+    case "run":
+      return frameAt(taco ? 64 : 16, 24, stride);
+    case "jump": {
+      const flight = 1 - (lift / fighter.jump + 1) * 0.5;
+      const progress = airTime < 0.05 ? airTime * 4 : 0.18 + 0.82 * flight;
+      return taco ? [34, 60, 35, 36, 61, 37][frameAt(0, 6, progress)] : frameAt(52, 12, progress);
+    }
+    case "land":
+      return frameAt(taco ? 134 : 64, 6, age / fighter.motion.land);
+    case "charge":
+      return taco ? charge < 0.65 ? 53 : 13 : frameAt(112, 3, charge);
+    case "roll":
+      return taco ? TACO_ROLL[frameAt(0, 8, age / ROLL_TIME)] : frameAt(70, 12, age / ROLL_TIME);
+    case "super": {
+      const motion = SUPER_MOTION[fighter.power];
+      const release2 = RELEASE_FRAME[fighter.power];
+      const start = taco ? 0 : 132;
+      const count = taco ? 8 : 16;
+      const frame = age < motion.release ? frameAt(start, release2, age / motion.release) : frameAt(start + release2, count - release2, (age - motion.release) / (motion.duration - motion.release));
+      return taco ? [53, 13, 54, 12, 50, 52, 39, 32][frame] : frame;
+    }
+    case "hurt":
+      return taco ? age < 0.1 ? 17 : 52 : frameAt(148, 6, age / 0.18);
+    case "down":
+      return taco ? 18 : frameAt(154, 6, age / 0.26);
+    case "recover":
+      return taco ? age < 0.14 ? 19 : 39 : frameAt(160, 8, age / 0.25);
+    case "victory":
+      return fighterVictoryFrame(fighter, age);
+    default:
+      return fighterIdleFrame(fighter, age);
+  }
 }
 
 // game/touch-actions.ts
@@ -34992,10 +35153,20 @@ var CONTROL_GAP = 12;
 var TOUCH_FOOTER_HEIGHT = 32;
 var COVER_FADE_DISTANCE = 22;
 var COVERED_OPACITY = 0.2;
+var LABEL_FALL_TIME = 0.72;
+var stickerWear = /* @__PURE__ */ new Map();
+var stickerTime = 0;
 var showing = false;
 var hasAlly = false;
 var canceledCharge = false;
 var visibleSurface;
+var visiblePortrait;
+var visibleLabels;
+var pressesBeforePeel = (action) => action === "melee" ? 8 : 4;
+function resetTouchStickers() {
+  stickerWear.clear();
+  stickerTime = 0;
+}
 function touchFooterTop() {
   return game.screen.height - TOUCH_FOOTER_HEIGHT - (game.kernel.opts.safe?.bottom ?? 0);
 }
@@ -35046,6 +35217,8 @@ function showTouchActions(visible) {
   if (!visible) cancelTouchActions();
   showing = visible;
   if (visibleSurface?.alive) visibleSurface.visible = visible;
+  if (visiblePortrait?.alive) visiblePortrait.visible = visible;
+  if (visibleLabels?.alive) visibleLabels.visible = visible;
 }
 function listenForTouchActions() {
   game.kernel.input.consume("ui", { pointer(event) {
@@ -35067,6 +35240,15 @@ function listenForTouchActions() {
       }
     }
     if (!nearest) return;
+    if (isCombatTouchAction(nearest.action) && ![...activePointers.values()].includes(nearest.action)) {
+      const wear = stickerWear.get(nearest.action) ?? { uses: 0, falling: null };
+      const limit = pressesBeforePeel(nearest.action);
+      if (wear.uses < limit) {
+        wear.uses++;
+        if (wear.uses === limit) wear.falling = stickerTime;
+        stickerWear.set(nearest.action, wear);
+      }
+    }
     activePointers.set(event.id, nearest.action);
     game.input.press("Touch:" + nearest.action, true);
     if (event.kind === "touch" && nearest.action !== "pause" && nearest.action !== "music" && nearest.action !== "special") vibrate(12);
@@ -35074,19 +35256,43 @@ function listenForTouchActions() {
   } });
 }
 var TouchButtons = class {
+  constructor(selectedFighter) {
+    this.selectedFighter = selectedFighter;
+    this.portrait = game.spawn({
+      id: "touch-attack-fighter",
+      texture: selectedFighter.art,
+      width: 82,
+      height: 61.5,
+      layer: "hud",
+      z: 24,
+      visible: false
+    });
+    visiblePortrait = this.portrait;
+  }
   trim = new ViewportTexture("phone-control-trim", -2);
   buttons = new ViewportTexture("phone-buttons", 23);
+  labels = new ViewportTexture("phone-labels", 25);
+  portrait;
   previous = "";
+  previousLabels = "";
   previousTrim = "";
-  render(fighter, meter, ally, music, charge) {
+  render(dt, fighter, meter, ally, music, charge) {
     hasAlly = ally;
     const surface = this.buttons.current;
+    const labels = this.labels.current;
     if (surface.handle !== visibleSurface) {
       visibleSurface = surface.handle;
       this.previous = "";
     }
+    if (labels.handle !== visibleLabels) {
+      visibleLabels = labels.handle;
+      this.previousLabels = "";
+    }
     surface.handle.visible = showing;
+    labels.handle.visible = showing;
+    this.portrait.visible = showing;
     if (!showing) return;
+    stickerTime += dt;
     this.drawTrim();
     const player = game.camera.project(fighter.x, fighter.y);
     const halfWidth = fighter.width * game.camera.zoom * 0.33;
@@ -35107,6 +35313,26 @@ var TouchButtons = class {
     }
     const buttons = layout().map((button) => ({ ...button, opacity: opacityAt(button.x, button.y, button.r) }));
     const held = new Set(activePointers.values());
+    const attack = buttons[0];
+    const punching = held.has("melee");
+    const pose = punching ? "jab" : "idle";
+    this.portrait.setFrame(fighterFrame(this.selectedFighter, pose, {
+      age: punching ? 0.12 : 0,
+      stride: 0,
+      airTime: 0,
+      lift: 0,
+      charge: 0,
+      attack: punching ? { windup: 0.1, length: 0.3 } : void 0
+    }));
+    this.portrait.x = deterministicMath.round(attack.x);
+    this.portrait.y = deterministicMath.round(attack.y) + (punching ? 1 : -1);
+    this.portrait.alpha = attack.opacity;
+    const stickers = buttons.flatMap((button) => {
+      if (!isCombatTouchAction(button.action)) return [];
+      const wear = stickerWear.get(button.action);
+      const fall = wear?.falling == null ? 0 : (stickerTime - wear.falling) / LABEL_FALL_TIME;
+      return fall < 1 ? [{ ...button, action: button.action, wear: (wear?.uses ?? 0) / pressesBeforePeel(button.action), fall: deterministicMath.floor(fall * 36) / 36 }] : [];
+    });
     const signature = JSON.stringify([
       buttons.map((b) => [b.x, b.y, b.r, b.opacity]),
       [...held],
@@ -35114,23 +35340,41 @@ var TouchButtons = class {
       music,
       deterministicMath.floor(charge * 22)
     ]);
-    if (signature === this.previous) return;
-    this.previous = signature;
-    surface.clear().draw((ctx) => {
-      for (const button of buttons) {
-        const progress = button.action === "special" ? meter / 100 : button.action === "charge" ? charge : 0;
-        const size = button.action === "melee" ? 70 : button.action === "pause" || button.action === "music" ? 64 : button.r * 2 + 5;
-        ctx.globalAlpha = button.opacity;
-        drawTouchGlyph(
+    if (signature !== this.previous) {
+      this.previous = signature;
+      surface.clear().draw((ctx) => {
+        for (const button of buttons) {
+          const progress = button.action === "special" ? meter / 100 : button.action === "charge" ? charge : 0;
+          const size = button.action === "melee" ? 61 : isCombatTouchAction(button.action) ? button.r * 2 - 4 : 40;
+          ctx.globalAlpha = button.opacity;
+          drawTouchGlyph(
+            ctx,
+            button.action,
+            button.x,
+            button.y,
+            size,
+            held.has(button.action),
+            progress,
+            music,
+            button.action === "melee"
+          );
+        }
+        ctx.globalAlpha = 1;
+      });
+    }
+    const labelSignature = JSON.stringify(stickers);
+    if (labelSignature === this.previousLabels) return;
+    this.previousLabels = labelSignature;
+    labels.clear().draw((ctx) => {
+      for (const sticker of stickers) {
+        ctx.globalAlpha = sticker.opacity;
+        drawPaperLabel(
           ctx,
-          button.action,
-          button.x,
-          button.y,
-          size,
-          held.has(button.action),
-          progress,
-          music,
-          true
+          sticker.action,
+          sticker.x,
+          sticker.y + (sticker.action === "melee" ? 26 : 16),
+          sticker.wear,
+          sticker.fall
         );
       }
       ctx.globalAlpha = 1;
@@ -35253,62 +35497,6 @@ function moveAxis() {
   const y = Number(pad.button("down")) - Number(pad.button("up"));
   const scale = x && y ? deterministicMath.SQRT1_2 : 1;
   return { x: x * scale, y: y * scale };
-}
-
-// game/fighter-animation.ts
-var MOVES = ["jab", "cross", "heel", "finisher", "shoot"];
-var TACO_ROLL = [40, 62, 41, 42, 43, 44, 45, 63];
-var ROLL_TIME = 0.245;
-var RELEASE_FRAME = { blast: 2, dash: 4, bounce: 2, flame: 4, syrup: 6, shield: 3 };
-var frameAt = (start, count, progress) => start + deterministicMath.min(count - 1, deterministicMath.max(0, deterministicMath.floor(count * progress)));
-function fighterIdleFrame(fighter, age) {
-  return fighter === DEFAULT_FIGHTER ? [0, 32, 32, 0, 33, 33, 0, 55][deterministicMath.floor(age * fighter.motion.idle) % 8] : 40 + deterministicMath.floor(age * fighter.motion.idle) % 12;
-}
-function fighterVictoryFrame(fighter, age) {
-  return fighter === DEFAULT_FIGHTER ? [20, 54, 21, 55][deterministicMath.floor(age * 7) % 4] : 168 + deterministicMath.floor(age * 8) % 8;
-}
-function fighterFrame(fighter, pose, state) {
-  const { age, stride, airTime, lift, attack, charge } = state;
-  const taco = fighter === DEFAULT_FIGHTER;
-  if (attack) {
-    const move = pose;
-    const recovery = (age - attack.windup) / (attack.length - attack.windup);
-    const start = taco ? 88 + 8 * MOVES.indexOf(move) : 82 + 10 * MOVES.indexOf(move);
-    return recovery < 0 ? frameAt(start, 3, age / attack.windup) : frameAt(start + 3, taco ? 5 : 7, recovery);
-  }
-  switch (pose) {
-    case "run":
-      return frameAt(taco ? 64 : 16, 24, stride);
-    case "jump": {
-      const flight = 1 - (lift / fighter.jump + 1) * 0.5;
-      const progress = airTime < 0.05 ? airTime * 4 : 0.18 + 0.82 * flight;
-      return taco ? [34, 60, 35, 36, 61, 37][frameAt(0, 6, progress)] : frameAt(52, 12, progress);
-    }
-    case "land":
-      return frameAt(taco ? 134 : 64, 6, age / fighter.motion.land);
-    case "charge":
-      return taco ? charge < 0.65 ? 53 : 13 : frameAt(112, 3, charge);
-    case "roll":
-      return taco ? TACO_ROLL[frameAt(0, 8, age / ROLL_TIME)] : frameAt(70, 12, age / ROLL_TIME);
-    case "super": {
-      const motion = SUPER_MOTION[fighter.power];
-      const release2 = RELEASE_FRAME[fighter.power];
-      const start = taco ? 0 : 132;
-      const count = taco ? 8 : 16;
-      const frame = age < motion.release ? frameAt(start, release2, age / motion.release) : frameAt(start + release2, count - release2, (age - motion.release) / (motion.duration - motion.release));
-      return taco ? [53, 13, 54, 12, 50, 52, 39, 32][frame] : frame;
-    }
-    case "hurt":
-      return taco ? age < 0.1 ? 17 : 52 : frameAt(148, 6, age / 0.18);
-    case "down":
-      return taco ? 18 : frameAt(154, 6, age / 0.26);
-    case "recover":
-      return taco ? age < 0.14 ? 19 : 39 : frameAt(160, 8, age / 0.25);
-    case "victory":
-      return fighterVictoryFrame(fighter, age);
-    default:
-      return fighterIdleFrame(fighter, age);
-  }
 }
 
 // game/roster-leg-rigs.ts
@@ -36078,10 +36266,10 @@ var Combat = class {
     });
     this.pickups.push({ x, y, drop, age: 0, body, badge });
   }
-  impact(x, y, color2, radius = 23, style = "burst", duration = 0.24, face = 1) {
-    this.impacts.push({ x, y, color: color2, radius, style, life: duration, duration, face });
+  impact(x, y, color2, radius = 23, style = "burst", duration = 0.24, face2 = 1) {
+    this.impacts.push({ x, y, color: color2, radius, style, life: duration, duration, face: face2 });
   }
-  fire(kind, x, y, face, altitude = 0, slope = 0) {
+  fire(kind, x, y, face2, altitude = 0, slope = 0) {
     const { sprite, speed, life } = SHOTS[kind];
     const texture = kind === "slice" && this.hero.fighter !== DEFAULT_FIGHTER ? this.hero.fighter.art + "-shot" : sprite;
     const body = game.spawn({
@@ -36093,8 +36281,8 @@ var Combat = class {
       layer: "world",
       z: y * 2 + 8
     });
-    body.sx = face;
-    this.shots.push({ x, y, kind, body, vx: speed * face, vy: slope, z: altitude, life });
+    body.sx = face2;
+    this.shots.push({ x, y, kind, body, vx: speed * face2, vy: slope, z: altitude, life });
   }
   damageFoe(foe, damage, direction2, heavy = false) {
     foe.hit(damage, direction2, heavy);
@@ -36289,15 +36477,15 @@ var Combat = class {
       this.damageBoss(deterministicMath.round(damage * 0.78), true);
     }
   }
-  superEffect(kind, x, y, face, life, height = 0) {
-    this.superEffects.push({ kind, x, y, face, life, age: 0, height });
+  superEffect(kind, x, y, face2, life, height = 0) {
+    this.superEffects.push({ kind, x, y, face: face2, life, age: 0, height });
   }
   stepPower(dt) {
     const power = this.power;
     if (!power) return;
     const h = this.hero;
     const { x, y } = h;
-    const { kind, face } = power;
+    const { kind, face: face2 } = power;
     const motion = SUPER_MOTION[kind];
     power.age += dt;
     const age = power.age - motion.release;
@@ -36310,7 +36498,7 @@ var Combat = class {
         if (first) {
           power.x = x;
           power.y = y;
-          this.superEffect(kind, x, y, face, 0.61, h.height);
+          this.superEffect(kind, x, y, face2, 0.61, h.height);
           game.feel.shake(4, 0.22);
         }
         this.powerHit(power.x, power.y, 174 * range, 75 * range, 67, power);
@@ -36329,7 +36517,7 @@ var Combat = class {
         if (age < motion.travel + dt) {
           this.powerHit(x, y, 46, 32, 77, power);
           if (age * 30 >= power.marks) {
-            this.superEffect(kind, x, y, face, 0.28, h.height);
+            this.superEffect(kind, x, y, face2, 0.28, h.height);
             power.marks++;
           }
         }
@@ -36338,14 +36526,14 @@ var Combat = class {
       case "bounce":
         if (age < 0.28 || !h.landed && h.height > 0 && power.age < 0.98) break;
         this.powerHit(x, y, 119, 58, 81, power);
-        this.superEffect(kind, x, y, face, 0.66);
+        this.superEffect(kind, x, y, face2, 0.66);
         game.sound.play("power-land");
         game.feel.shake(5.6, 0.25);
         this.power = null;
         break;
       case "flame":
         if (power.marks < 5 && age >= power.marks * 0.061) {
-          const at = clamp3(x - 13 * face, this.left, this.right);
+          const at = clamp3(x - 13 * face2, this.left, this.right);
           this.zones.push({
             x: at,
             y,
@@ -36357,7 +36545,7 @@ var Combat = class {
             damage: 62,
             power
           });
-          this.superEffect(kind, at, y, face, 0.35, h.height);
+          this.superEffect(kind, at, y, face2, 0.35, h.height);
           power.marks++;
         }
         if (power.age >= motion.duration) this.power = null;
@@ -36365,7 +36553,7 @@ var Combat = class {
       case "syrup":
         if (!first) break;
         for (const [i, lane] of [-27, 0, 27].entries()) {
-          const at = clamp3(x + face * (49 + i * 46), this.left, this.right);
+          const at = clamp3(x + face2 * (49 + i * 46), this.left, this.right);
           const row = clamp3(y + lane, STREET_TOP, STREET_BOTTOM);
           const delay = 0.19 + i * 0.1;
           this.zones.push({
@@ -36380,7 +36568,7 @@ var Combat = class {
             power
           });
         }
-        this.superEffect(kind, x, y, face, 0.49, h.height);
+        this.superEffect(kind, x, y, face2, 0.49, h.height);
         game.feel.shake(3.3, 0.17);
         this.power = null;
         break;
@@ -36388,7 +36576,7 @@ var Combat = class {
         this.powerHit(x, y, 75, 42, 54, power);
         if (power.age >= 1.42) {
           this.powerHit(x, y, 112, 50, 57, power);
-          this.superEffect(kind, x, y, face, 0.46);
+          this.superEffect(kind, x, y, face2, 0.46);
           game.sound.play("power-crack");
           this.power = null;
         }
@@ -36985,7 +37173,7 @@ var DistrictBoss = class {
 var GOLD = "#ffe070";
 var WHITE2 = "#fff3e6";
 var MUTED = "#b7aacd";
-var PINK2 = "#ff75c4";
+var PINK = "#ff75c4";
 var CYAN = "#91f6ff";
 function label(text2, x, y, size = 12, color2 = WHITE2, align4 = "center", z = 7, family = "sans-bold") {
   return game.typography.label({
@@ -37180,10 +37368,10 @@ function spark(ctx, x, y, length, color2) {
   ctx.lineTo(x - 1, y + 1);
   ctx.fill();
 }
-function ribbon(ctx, x, y, size, face, color2, tilt) {
+function ribbon(ctx, x, y, size, face2, color2, tilt) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(face, 1);
+  ctx.scale(face2, 1);
   ctx.rotate(tilt);
   const tint = ctx.createLinearGradient(-size, 0, size, 0);
   tint.addColorStop(0, "#11233400");
@@ -38126,6 +38314,7 @@ function continueRun() {
   game.scenes.go(saved.scene);
 }
 function newRun(index = 0, opening = true, fighter = runFighter) {
+  resetTouchStickers();
   stageIndex = clamp3(deterministicMath.floor(index), 0, STAGES.length - 1);
   active = null;
   cleared = [];
@@ -38214,7 +38403,7 @@ var Play = {
     const view = new StageArt(index, runFighter, phone);
     const hazards = new StreetHazards(stage.hazards);
     const hud = new Hud(index, number, runFighter, phone);
-    const buttons = phone ? new TouchButtons() : null;
+    const buttons = phone ? new TouchButtons(runFighter) : null;
     track(stage.music);
     let fightsStarted = 0, distance3 = c.hero.x, age = 0, intro = 3.6, lost = 0;
     const exitX = stage.width - 37;
@@ -38275,7 +38464,7 @@ var Play = {
       distance3 = deterministicMath.max(distance3, h.x);
       view.render(c, dt, age, hazards);
       hud.render(c, hint(), intro, index, (distance3 - 96) / (destinationX - 96));
-      buttons?.render(h.sprite, h.meter, c.assists.length > 0, musicEnabled(), h.chargeProgress);
+      buttons?.render(dt, h.sprite, h.meter, c.assists.length > 0, musicEnabled(), h.chargeProgress);
       if (h.hp <= 0) {
         lost += dt;
         if (lost > 1) finish(false);
@@ -38683,7 +38872,7 @@ function backdrop(stage) {
   panel.line(27, 26, 614, 26, 1, "#a170a3", 0.63);
   panel.line(27, 329, 614, 329, 1, "#a170a3", 0.49);
   panel.rect(26, 25, 31, 2, HOT);
-  panel.rect(585, 328, 29, 2, PINK2);
+  panel.rect(585, 328, 29, 2, PINK);
 }
 function footer(text2, y = 343) {
   type(text2, 320, y, 10, "#e4cbe2", "center", 25);
@@ -38942,7 +39131,7 @@ var Controls = {
       "Super / Ally",
       "Pause / Music"
     ];
-    const icons = [
+    const icons2 = [
       [],
       ["jump"],
       ["melee"],
@@ -38962,7 +39151,7 @@ var Controls = {
       type(touch ? phone[i] : pad, 446, y, 12, "#d1eff7", "left", 14, "sans");
     });
     if (touch) grid.draw((ctx) => {
-      icons.forEach((actions, i) => actions.forEach((action, j) => {
+      icons2.forEach((actions, i) => actions.forEach((action, j) => {
         drawTouchGlyph(ctx, action, 428 - (actions.length - 1 - j) * 24, 109 + 21 * i, 23);
       }));
     });
@@ -39065,7 +39254,7 @@ var Pause = {
     const panel = game.texture.create({ layer: "hud", id: "pause-frame", width: 640, height: 360, y: 180 });
     panel.handle.z = 21;
     panel.fill([{ x: 190, y: 53 }, { x: 480, y: 53 }, { x: 455, y: 312 }, { x: 171, y: 312 }], "#19122d");
-    panel.line(190, 53, 479, 53, 2, PINK2);
+    panel.line(190, 53, 479, 53, 2, PINK);
     panel.line(172, 312, 454, 312, 1, "#7c547d");
     const heading = headline("paused", 320, 85);
     const layout2 = () => {
