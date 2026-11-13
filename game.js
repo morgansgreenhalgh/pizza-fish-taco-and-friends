@@ -34807,7 +34807,7 @@ var BUTTON_ART = {
   },
   dodge: {
     outline: [[-0.72, -0.93], [1, -0.93], [0.72, 0.93], [-1, 0.93]],
-    icon: [[[-10, -6], [-3, 0], [-10, 6]], [[-1, -6], [6, 0], [-1, 6]], [[8, -6], [15, 0], [8, 6]]]
+    icon: [[[-14, 3], [-8, 3]], [[-14, 9], [-5, 9]], [[1, 8], [-3, 4], [-4, -2], [0, -8], [7, -9], [12, -6], [13, 0], [9, 5], [5, 5]], [[8, 1], [4, 5], [8, 9]]]
   },
   shoot: {
     outline: [[-0.88, -0.84], [0.5, -0.84], [1, 0], [0.5, 0.84], [-0.88, 0.84], [-0.98, 0.55], [-0.98, -0.55]],
@@ -34823,7 +34823,7 @@ var BUTTON_ART = {
   },
   assist: {
     outline: [[-0.63, -0.95], [0.74, -0.95], [0.98, -0.63], [0.98, 0.6], [0.63, 0.92], [-0.97, 0.92], [-0.97, -0.54]],
-    icon: [[[-7, 0], [7, 0]], [[0, -7], [0, 7]], [[-12, -5], [-12, 5]], [[12, -5], [12, 5]]]
+    icon: [[[-7, -9], [-3, -6], [-3, -2], [-7, 1], [-11, -2], [-11, -6], [-7, -9]], [[-15, 9], [-13, 5], [-7, 3], [-1, 5], [1, 9]], [[3, -2], [14, -2]], [[8.5, -7.5], [8.5, 3.5]]]
   },
   pause: {
     outline: [[-0.84, -1], [0.9, -1], [1, -0.67], [1, 0.59], [0.84, 1], [-0.9, 1], [-1, 0.67], [-1, -0.59]],
@@ -34840,7 +34840,6 @@ var activePointers = /* @__PURE__ */ new Map();
 var UTILITY_RADIUS = 24;
 var UTILITY_HIT_PADDING = 11;
 var UTILITY_SPACING = 82;
-var ATTACK_HIT_PADDING = 5;
 var CONTROL_GAP = 12;
 var showing = false;
 var hasAlly = false;
@@ -34852,36 +34851,31 @@ function touchDockTop() {
 function layout() {
   const screen3 = game.screen;
   const safe = game.kernel.opts.safe ?? { left: 0, right: 0, top: 0, bottom: 0 };
-  const r = deterministicMath.min(36, deterministicMath.max(30, 24 / screen3.cssScale));
-  const small = r - 2;
-  const gap = r + small + 8;
   const right = screen3.width - safe.right;
-  const x = right - r - 13;
   const bottom = screen3.height - safe.bottom;
-  const low = bottom - 41;
-  const upper = bottom - 94;
-  const rollLeft = x - gap * 2 - small - ATTACK_HIT_PADDING;
-  const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
-  const utilityCenter = deterministicMath.min((safe.left + right) / 2, rollLeft - CONTROL_GAP - utilityHalfWidth);
-  const all = [
-    { action: "melee", x, y: low, r, color: "#ffad74", text: "ATTACK" },
-    { action: "jump", x: x - gap, y: low + 2, r: small, color: "#7beaff", text: "JUMP" },
-    { action: "dodge", x: x - gap * 2, y: low + 2, r: small, color: "#c3afff", text: "ROLL" },
-    { action: "shoot", x, y: upper, r: small, color: "#8eb7ff", text: "SHOT" },
-    { action: "charge", x: x - gap, y: upper, r: small, color: "#ffd68a", text: "CHARGE" },
-    { action: "special", x: x - gap * 2, y: upper, r: small, color: "#ff87c6", text: "SUPER" },
-    { action: "pause", x: utilityCenter - UTILITY_SPACING / 2, y: low + 2, r: UTILITY_RADIUS, color: "#d4bff2", text: "PAUSE" },
-    { action: "music", x: utilityCenter + UTILITY_SPACING / 2, y: low + 2, r: UTILITY_RADIUS, color: "#d4bff2", text: "MUSIC" }
+  const lower = bottom - 43;
+  const upper = bottom - 102;
+  const charge = { action: "charge", x: right - 218, y: lower, r: 22, color: "#ffd68a" };
+  const combat = [
+    { action: "melee", x: right - 62, y: lower, r: 40, color: "#ffb16c", text: "HIT" },
+    { action: "jump", x: right - 25, y: upper, r: 22, color: "#7beaff" },
+    { action: "dodge", x: right - 145, y: lower, r: 27, color: "#c3afff" },
+    { action: "shoot", x: right - 176, y: upper, r: 22, color: "#8eb7ff" },
+    { action: "special", x: right - 102, y: upper, r: 24, color: "#ff87c6" },
+    charge
   ];
-  if (hasAlly) all.push({
-    action: "assist",
-    x: x - gap * 3,
-    y: upper,
-    r: small - 1,
-    color: "#94f3cc",
-    text: "ALLY"
-  });
-  return all;
+  if (hasAlly) combat.push({ action: "assist", x: right - 246, y: upper, r: 22, color: "#94f3cc" });
+  const combatLeft = charge.x - combatHitRadius(charge);
+  const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
+  const utilityCenter = deterministicMath.min((safe.left + right) / 2, combatLeft - CONTROL_GAP - utilityHalfWidth);
+  return [
+    ...combat,
+    { action: "pause", x: utilityCenter - UTILITY_SPACING / 2, y: bottom - 39, r: UTILITY_RADIUS, color: "#d4bff2", text: "PAUSE" },
+    { action: "music", x: utilityCenter + UTILITY_SPACING / 2, y: bottom - 39, r: UTILITY_RADIUS, color: "#d4bff2", text: "MUSIC" }
+  ];
+}
+function combatHitRadius(button) {
+  return deterministicMath.max(27, button.r + 2);
 }
 function release(id2, canceled) {
   const action = activePointers.get(id2);
@@ -34915,11 +34909,9 @@ function listenForTouchActions() {
     let nearest;
     let score = Infinity;
     for (const button of layout()) {
-      const utility = BUTTON_ART[button.action].utility;
-      const distance3 = deterministicMath.max(
-        deterministicMath.abs(event.x - button.x) / (button.r + (utility ? UTILITY_HIT_PADDING : ATTACK_HIT_PADDING)),
-        deterministicMath.abs(event.y - button.y) / (utility ? 21 : 26)
-      );
+      const dx = event.x - button.x;
+      const dy = event.y - button.y;
+      const distance3 = BUTTON_ART[button.action].utility ? deterministicMath.max(deterministicMath.abs(dx) / (button.r + UTILITY_HIT_PADDING), deterministicMath.abs(dy) / 21) : deterministicMath.hypot(dx, dy) / combatHitRadius(button);
       if (distance3 <= 1 && distance3 < score) {
         nearest = button;
         score = distance3;
@@ -34932,13 +34924,21 @@ function listenForTouchActions() {
     event.claim();
   } });
 }
+function drawTouchGlyph(ctx, action, x, y, scale = 1) {
+  ctx.beginPath();
+  for (const [[firstX, firstY], ...points] of BUTTON_ART[action].icon) {
+    ctx.moveTo(x + firstX * scale, y + firstY * scale);
+    for (const [px, py] of points) ctx.lineTo(x + px * scale, y + py * scale);
+  }
+  ctx.stroke();
+}
 function drawButton(ctx, button, down, music, progress, pulse) {
   const { action, text: text2, r, color: color2, x, y } = button;
   const art = BUTTON_ART[action];
   const width = art.utility ? r + 8 : r;
-  const height = r * (art.utility ? 0.59 : 0.69);
+  const height = r * (art.utility ? 0.59 : action === "melee" ? 0.88 : 0.84);
   const ready = progress >= 1;
-  const accent = action === "special" && ready ? "#fff0a4" : color2;
+  const accent = action === "special" ? ready ? "#fff0a4" : "#bd83ab" : color2;
   const bright = down || ready;
   const ink = bright ? "#24122d" : "#fff3df";
   const outline = (inset, shift2) => {
@@ -34957,8 +34957,8 @@ function drawButton(ctx, button, down, music, progress, pulse) {
   ctx.fill();
   outline(0, 0);
   const paint2 = ctx.createLinearGradient(0, -height, 0, height);
-  paint2.addColorStop(0, bright ? "#fff4d9" : action === "melee" ? "#54233eed" : "#29213eed");
-  paint2.addColorStop(0.46, bright ? accent : "#181427f4");
+  paint2.addColorStop(0, bright ? "#fff4d9" : action === "melee" ? "#75354e" : "#322644");
+  paint2.addColorStop(0.46, bright ? accent : action === "melee" ? "#43233c" : "#1c172c");
   paint2.addColorStop(1, bright ? color2 : "#21162ae8");
   ctx.fillStyle = paint2;
   ctx.fill();
@@ -34980,24 +34980,25 @@ function drawButton(ctx, button, down, music, progress, pulse) {
   ctx.lineWidth = action === "melee" ? 2.8 : 2;
   ctx.lineJoin = "round";
   ctx.lineCap = "round";
-  const iconX = art.utility ? -21 : 0, iconY = art.utility ? 0 : -7;
-  for (const path of art.icon) {
-    ctx.beginPath();
-    path.forEach(([px, py], i) => {
-      if (i === 0) ctx.moveTo(px + iconX, py + iconY);
-      else ctx.lineTo(px + iconX, py + iconY);
-    });
-    ctx.stroke();
+  const hasMeter = action === "charge" || action === "special";
+  drawTouchGlyph(
+    ctx,
+    action,
+    art.utility ? -21 : 0,
+    action === "melee" ? -9 : hasMeter ? -4 : 0,
+    action === "melee" ? 1.55 : 1
+  );
+  if (text2) {
+    ctx.fillStyle = ink;
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.font = art.utility ? "bold 9px sans-serif" : "900 14px sans-serif";
+    ctx.fillText(action === "music" && !music ? "MUSIC \xD7" : text2, art.utility ? 6 : 0, art.utility ? 1 : 15);
   }
-  ctx.fillStyle = ink;
-  ctx.textAlign = "center";
-  ctx.textBaseline = "middle";
-  ctx.font = action === "melee" ? "900 14px sans-serif" : art.utility ? "bold 9px sans-serif" : "bold 10.5px sans-serif";
-  ctx.fillText(action === "music" && !music ? "MUSIC \xD7" : text2, art.utility ? 6 : 0, art.utility ? 1 : 9);
-  if (action === "charge" || action === "special") {
+  if (hasMeter) {
     for (let i = 0; i < 6; i++) {
       ctx.fillStyle = i < deterministicMath.round(progress * 6) ? bright ? "#733659" : accent : "#ac83a552";
-      ctx.fillRect(-13 + i * 4.6, 16, 3, 2.5);
+      ctx.fillRect(-13 + i * 4.6, 11, 3, 2.5);
     }
   }
   ctx.restore();
@@ -38824,6 +38825,16 @@ var Controls = {
       "Super / Ally",
       "Pause / Music"
     ];
+    const icons = [
+      [],
+      ["jump"],
+      ["melee"],
+      ["charge"],
+      ["shoot"],
+      ["dodge"],
+      ["special", "assist"],
+      ["pause", "music"]
+    ];
     type(touch ? "TOUCH" : "GAMEPAD", 446, 88, 11, PAPER);
     rows.forEach(([action, keys, pad], i) => {
       const y = 109 + 21 * i;
@@ -38832,6 +38843,15 @@ var Controls = {
       type(action, 52, y, 13, PAPER);
       type(keys, 267, y, 12, "#d1eff7", "left", 14, "sans");
       type(touch ? phone[i] : pad, 446, y, 12, "#d1eff7", "left", 14, "sans");
+    });
+    if (touch) grid.draw((ctx) => {
+      ctx.strokeStyle = "#f4c9ef";
+      ctx.lineWidth = 1.6;
+      ctx.lineCap = "round";
+      ctx.lineJoin = "round";
+      icons.forEach((actions, i) => actions.forEach((action, j) => {
+        drawTouchGlyph(ctx, action, 428 - (actions.length - 1 - j) * 24, 109 + 21 * i, 0.66);
+      }));
     });
     type(touch ? "Auto-hit attacks nearby foes when you are free to swing." : "Land melee hits to refill shots and charge your special.", 42, 280, 11, MUTED, "left", 14, "sans");
     const choices = [{ text: "Back", action: title }];
