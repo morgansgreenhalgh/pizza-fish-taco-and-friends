@@ -35196,16 +35196,16 @@ function layout() {
   const safe = game.kernel.opts.safe ?? { left: 0, right: 0, top: 0, bottom: 0 };
   const right = screen3.width - safe.right;
   const bottom = screen3.height - safe.bottom;
-  const roll = { action: "dodge", x: right - 125, y: bottom - 51, r: 22 };
+  const roll = { action: "dodge", x: right - 129, y: bottom - 51, r: 22 };
   const combat = [
     { action: "melee", x: right - 68, y: bottom - 63, r: 34 },
-    { action: "jump", x: right - 25, y: bottom - 104, r: 20 },
+    { action: "jump", x: right - 24, y: bottom - 106, r: 20 },
     roll,
-    { action: "special", x: right - 80, y: bottom - 121, r: 23 },
+    { action: "special", x: right - 79, y: bottom - 121, r: 23 },
     { action: "charge", x: right - 131, y: bottom - 101, r: 20 },
-    { action: "shoot", x: right - 27, y: bottom - 153, r: 20 }
+    { action: "shoot", x: right - 40, y: bottom - 151, r: 20 }
   ];
-  if (hasAlly) combat.push({ action: "assist", x: right - 122, y: bottom - 150, r: 20 });
+  if (hasAlly) combat.push({ action: "assist", x: right - 118, y: bottom - 149, r: 20 });
   const combatLeft = roll.x - combatHitRadius(roll);
   const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
   const utilityCenter = deterministicMath.min((safe.left + right) / 2, combatLeft - CONTROL_GAP - utilityHalfWidth);
@@ -35217,6 +35217,15 @@ function layout() {
 }
 function combatHitRadius(button) {
   return deterministicMath.max(24, button.r + 2);
+}
+function hitDistance(button, x, y) {
+  const dx = x - button.x;
+  const dy = y - button.y;
+  if (!isCombatTouchAction(button.action))
+    return deterministicMath.max(deterministicMath.abs(dx) / (button.r + UTILITY_HIT_PADDING), deterministicMath.abs(dy) / 21);
+  if (button.action === "shoot" || button.action === "assist") return deterministicMath.hypot(dx / 24, dy / 21);
+  if (button.action === "special") return deterministicMath.hypot(dx / 22, dy / 21);
+  return deterministicMath.hypot(dx, dy) / combatHitRadius(button);
 }
 function release(id2, canceled) {
   const action = activePointers.get(id2);
@@ -35252,9 +35261,7 @@ function listenForTouchActions() {
     let nearest;
     let score = Infinity;
     for (const button of layout()) {
-      const dx = event.x - button.x;
-      const dy = event.y - button.y;
-      const distance3 = button.action === "pause" || button.action === "music" ? deterministicMath.max(deterministicMath.abs(dx) / (button.r + UTILITY_HIT_PADDING), deterministicMath.abs(dy) / 21) : deterministicMath.hypot(dx, dy) / combatHitRadius(button);
+      const distance3 = hitDistance(button, event.x, event.y);
       if (distance3 <= 1 && distance3 < score) {
         nearest = button;
         score = distance3;
