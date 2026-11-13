@@ -34795,47 +34795,147 @@ var ViewportTexture = class {
   }
 };
 
-// game/touch-actions.ts
-var BUTTON_ART = {
+// game/touch-art.ts
+var INK = "#24152d";
+var PAPER = "#fff2c7";
+var GOLD = "#ffd271";
+var ORANGE = "#ff8f61";
+var PINK = "#ff86a7";
+var MINT = "#8df6d5";
+var stickers = {
   melee: {
-    outline: [[-0.83, -1], [0.79, -1], [1, -0.6], [1, 0.55], [0.66, 1], [-0.8, 1], [-1, 0.67], [-1, -0.67]],
-    icon: [[[-13, 2], [-7, -5], [-1, -5]], [[-7, 7], [1, -2], [5, -2]], [[0, 8], [9, -1], [13, -1]]]
+    color: "#ffb96f",
+    backing: "M 8,40 C 1,25 14,13 28,11 C 39,9 49,3 57,9 C 65,16 60,26 63,36 C 67,49 52,52 43,55 C 29,61 15,57 8,40 Z",
+    art: [
+      [PINK, "M 43,23 L 50,7 L 53,17 L 63,13 L 59,24 L 66,28 L 56,33 L 58,43 L 47,36 Z"],
+      [PAPER, "M 7,26 L 20,22 L 16,26 L 3,30 Z M 3,38 L 15,34 L 12,39 L 0,42 Z M 11,47 L 23,41 L 20,47 L 9,50 Z"],
+      [PAPER, "M 13,35 L 25,29 Q 26,24 31,20 L 39,15 Q 44,12 46,17 Q 50,14 53,19 Q 57,18 59,23 Q 62,24 61,29 L 56,38 Q 53,43 43,44 L 35,45 L 24,52 Z", true],
+      [ORANGE, "M 17,34 L 26,30 L 35,45 L 24,51 Z", true],
+      [INK, "M 31,30 Q 33,25 40,26 L 45,29 L 43,31 L 38,29 Z M 43,21 L 45,17 L 47,18 L 45,23 Z M 49,23 L 52,19 L 54,20 L 51,25 Z M 54,27 L 57,23 L 59,24 L 56,29 Z"],
+      [ORANGE, "M 36,39 L 48,36 L 57,31 L 54,37 Q 51,41 39,42 Z"]
+    ]
   },
   jump: {
-    outline: [[-0.53, -1], [0.53, -1], [1, -0.27], [0.85, 0.74], [0.58, 0.96], [-0.58, 0.96], [-0.85, 0.74], [-1, -0.27]],
-    icon: [[[-9, 1], [0, -8], [9, 1]], [[-6, 8], [0, 2], [6, 8]]]
+    color: "#9af3e3",
+    backing: "M 7,41 Q 3,29 15,18 Q 25,8 46,10 Q 60,11 60,26 Q 58,43 44,52 Q 23,61 12,51 Z",
+    art: [
+      [PAPER, "M 13,39 L 10,37 L 17,26 L 22,28 L 16,39 Z M 23,49 L 19,47 L 23,39 L 27,41 Z"],
+      [INK, "M 39,9 L 51,6 L 49,20 L 45,16 L 37,25 L 32,21 L 40,13 Z"],
+      [PAPER, "M 20,38 L 23,26 L 29,23 L 33,30 L 41,29 L 49,25 Q 55,23 56,29 Q 57,34 50,39 L 31,49 Q 25,52 20,46 Z", true],
+      [MINT, "M 21,37 L 24,27 L 29,25 L 33,32 L 41,31 L 49,27 Q 53,25 54,29 L 49,34 L 25,44 Z"],
+      [INK, "M 24,42 L 35,38 L 37,40 L 26,45 Z M 33,32 L 35,36 L 33,37 L 31,33 Z M 38,30 L 40,34 L 38,35 L 36,31 Z"]
+    ]
   },
   dodge: {
-    outline: [[-0.72, -0.93], [1, -0.93], [0.72, 0.93], [-1, 0.93]],
-    icon: [[[-14, 3], [-8, 3]], [[-14, 9], [-5, 9]], [[1, 8], [-3, 4], [-4, -2], [0, -8], [7, -9], [12, -6], [13, 0], [9, 5], [5, 5]], [[8, 1], [4, 5], [8, 9]]]
+    color: "#cbb2ff",
+    backing: "M 6,33 Q 10,19 25,15 Q 43,7 56,18 Q 65,27 60,39 Q 56,55 32,55 Q 11,53 6,42 Z",
+    art: [
+      [PAPER, "M 4,32 L 21,25 L 17,30 L 5,35 Z M 1,41 L 20,34 L 17,39 L 4,44 Z M 9,47 L 21,43 L 18,48 L 10,50 Z"],
+      [ORANGE, "M 19,36 Q 20,23 33,19 Q 47,16 54,27 Q 61,40 48,49 Q 34,57 24,46 Z", true],
+      [GOLD, "M 24,35 Q 26,25 37,24 Q 50,22 53,34 L 49,44 L 25,41 Z"],
+      [MINT, "M 23,34 L 28,34 L 32,38 L 38,35 L 43,39 L 49,36 L 53,38 L 49,46 L 25,41 Z"],
+      [INK, "M 38,27 Q 52,29 46,40 Q 42,45 33,43 L 37,49 L 30,49 L 23,41 L 31,35 L 37,36 L 32,40 Q 45,41 44,34 Q 42,30 37,30 Z"]
+    ]
   },
   shoot: {
-    outline: [[-0.88, -0.84], [0.5, -0.84], [1, 0], [0.5, 0.84], [-0.88, 0.84], [-0.98, 0.55], [-0.98, -0.55]],
-    icon: [[[-4, -7], [11, 0], [-4, 7], [-4, -7]], [[-15, 0], [-8, 0]]]
+    color: "#8fd4ff",
+    backing: "M 5,35 Q 5,23 22,16 Q 36,7 51,13 Q 63,19 59,35 Q 54,51 33,52 Q 14,56 5,43 Z",
+    art: [
+      [PAPER, "M 5,24 L 24,22 L 18,27 L 1,28 Z M 4,37 L 24,31 L 19,37 L 2,42 Z M 10,46 L 28,39 L 23,45 L 9,50 Z"],
+      [GOLD, "M 23,19 Q 36,11 49,16 L 57,30 L 31,49 Q 28,51 27,47 Z", true],
+      [ORANGE, "M 23,19 Q 33,10 47,13 Q 58,17 58,29 L 53,34 Q 52,23 46,21 Q 33,17 24,25 Z", true],
+      [INK, "M 30,29 L 35,27 L 39,30 L 36,35 L 31,35 Z M 44,24 L 48,26 L 47,30 L 42,30 L 40,26 Z M 34,38 L 38,37 L 40,40 L 37,44 L 33,42 Z"]
+    ]
   },
   charge: {
-    outline: [[-0.72, -0.97], [0.72, -0.97], [0.9, -0.69], [0.9, 0.69], [0.72, 0.97], [-0.72, 0.97], [-0.9, 0.69], [-0.9, -0.69]],
-    icon: [[[-7, -4], [-7, 5], [8, 5], [8, -4], [-7, -4]], [[8, -2], [11, -2], [11, 3], [8, 3]], [[-2, -2], [-2, 3]], [[2, -2], [2, 3]]]
+    color: "#ffc16f",
+    backing: "M 15,13 Q 25,6 39,9 Q 56,11 57,28 Q 60,44 48,53 Q 29,58 17,52 Q 6,45 9,30 Z",
+    art: [
+      [PAPER, "M 50,12 L 51,19 L 57,21 L 52,24 L 51,29 L 47,24 L 42,22 L 48,19 Z M 11,34 L 14,37 L 10,43 L 7,40 Z"],
+      [ORANGE, "M 22,23 L 29,18 L 29,12 L 34,6 L 38,13 L 38,19 L 44,24 L 48,45 Q 49,50 44,53 L 23,53 Q 17,52 17,46 Z", true],
+      [PAPER, "M 28,14 L 39,14 L 39,20 L 28,20 Z", true],
+      [PAPER, "M 21,29 L 44,29 L 46,46 L 19,46 Z"],
+      [INK, "M 34,30 L 27,39 L 32,39 L 30,46 L 40,36 L 34,36 L 37,30 Z"]
+    ]
   },
   special: {
-    outline: [[-0.48, -1], [0.48, -1], [1, -0.36], [1, 0.36], [0.48, 1], [-0.48, 1], [-1, 0.36], [-1, -0.36]],
-    icon: [[[0, -9], [3, -3], [10, 0], [3, 3], [0, 9], [-3, 3], [-10, 0], [-3, -3], [0, -9]]]
+    color: "#ef9df1",
+    backing: "M 8,37 Q 4,25 13,16 Q 23,6 38,9 Q 52,8 59,20 Q 66,32 56,47 Q 49,58 31,55 Q 15,56 8,44 Z",
+    art: [
+      [PAPER, "M 31,7 L 37,17 L 48,12 L 48,23 L 60,26 L 51,34 L 55,45 L 44,43 L 40,54 L 32,46 L 22,52 L 21,41 L 9,40 L 17,31 L 10,22 L 23,21 Z", true],
+      [PINK, "M 33,17 L 39,24 L 48,22 L 46,29 L 52,34 L 44,36 L 43,44 L 36,40 L 29,45 L 28,37 L 20,36 L 25,30 L 23,23 L 30,24 Z"],
+      [INK, "M 37,19 L 28,33 L 34,33 L 30,43 L 45,29 L 37,29 L 41,19 Z"]
+    ]
   },
   assist: {
-    outline: [[-0.63, -0.95], [0.74, -0.95], [0.98, -0.63], [0.98, 0.6], [0.63, 0.92], [-0.97, 0.92], [-0.97, -0.54]],
-    icon: [[[-7, -9], [-3, -6], [-3, -2], [-7, 1], [-11, -2], [-11, -6], [-7, -9]], [[-15, 9], [-13, 5], [-7, 3], [-1, 5], [1, 9]], [[3, -2], [14, -2]], [[8.5, -7.5], [8.5, 3.5]]]
-  },
-  pause: {
-    outline: [[-0.84, -1], [0.9, -1], [1, -0.67], [1, 0.59], [0.84, 1], [-0.9, 1], [-1, 0.67], [-1, -0.59]],
-    icon: [[[-2, -4], [-2, 4]], [[2, -4], [2, 4]]],
-    utility: true
-  },
-  music: {
-    outline: [[-0.84, -1], [0.9, -1], [1, -0.67], [1, 0.59], [0.84, 1], [-0.9, 1], [-1, 0.67], [-1, -0.59]],
-    icon: [[[-3, 4], [-5, 3], [-4, 1], [-1, 1], [-1, -5], [5, -7], [5, 0], [3, 2], [1, 2]]],
-    utility: true
+    color: "#94ebbb",
+    backing: "M 5,37 Q 2,22 15,15 Q 25,9 37,13 Q 47,7 56,12 Q 65,22 58,39 Q 53,53 38,54 Q 18,57 8,46 Z",
+    art: [
+      [ORANGE, "M 9,30 Q 11,17 25,16 Q 39,15 43,28 L 42,44 Q 38,51 24,51 Q 11,51 8,43 Z", true],
+      [PAPER, "M 18,22 L 23,20 L 24,22 L 20,24 Z M 29,21 L 34,21 L 35,23 L 30,24 Z"],
+      [INK, "M 9,28 Q 26,33 43,27 L 43,43 Q 23,47 8,41 Z"],
+      [MINT, "M 10,32 L 17,32 L 20,35 L 27,32 L 32,34 L 42,31 L 41,36 L 33,39 L 27,37 L 20,40 L 15,37 L 9,38 Z"],
+      [PAPER, "M 46,15 L 52,15 L 52,22 L 59,22 L 59,28 L 52,28 L 52,35 L 46,35 L 46,28 L 39,28 L 39,22 L 46,22 Z", true]
+    ]
   }
 };
+var utility = {
+  pause: "M 25,21 H 30 V 43 H 25 Z M 34,21 H 39 V 43 H 34 Z",
+  music: "M 30,23 L 43,20 V 35 C 43,43 31,44 32,38 Q 33,33 39,34 V 26 L 33,28 V 40 C 33,47 22,48 22,42 Q 23,37 30,38 Z"
+};
+var stickerPaths = Object.fromEntries(Object.entries(stickers).map(([action, sticker]) => [
+  action,
+  {
+    color: sticker.color,
+    backing: new Path2D(sticker.backing),
+    art: sticker.art.map(([color2, path, outline]) => ({ color: color2, path: new Path2D(path), outline }))
+  }
+]));
+var utilityPaths = { pause: new Path2D(utility.pause), music: new Path2D(utility.music) };
+function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, music = true) {
+  ctx.save();
+  ctx.translate(x, y + (down ? 2 : 0));
+  const scale = size / 64 * (down ? 0.93 : 1);
+  ctx.scale(scale, scale);
+  ctx.translate(-32, -32);
+  if (action === "pause" || action === "music") {
+    ctx.fillStyle = down ? "#fff2c7" : "#d3bcdc";
+    ctx.fill(utilityPaths[action]);
+    if (action === "music" && !music) {
+      ctx.strokeStyle = "#ff86a7";
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      ctx.moveTo(21, 44);
+      ctx.lineTo(44, 20);
+      ctx.stroke();
+    }
+  } else {
+    const sticker = stickerPaths[action];
+    const ready = (action === "special" || action === "charge") && progress >= 1;
+    ctx.lineJoin = "round";
+    ctx.strokeStyle = down || ready ? "#fff3c6" : "#10101b";
+    ctx.lineWidth = down || ready ? 4 : 3;
+    ctx.stroke(sticker.backing);
+    ctx.fillStyle = down || ready ? "#fff3c6" : sticker.color + (action === "special" ? "a8" : "e8");
+    ctx.fill(sticker.backing);
+    ctx.lineWidth = 2.4;
+    ctx.strokeStyle = INK;
+    for (const part of sticker.art) {
+      ctx.fillStyle = part.color;
+      ctx.fill(part.path);
+      if (part.outline) ctx.stroke(part.path);
+    }
+    if (action === "special" || action === "charge") {
+      ctx.fillStyle = "#24152d";
+      ctx.fillRect(20, 57, 24, 3.5);
+      ctx.fillStyle = ready ? PAPER : sticker.color;
+      ctx.fillRect(21, 58, 22 * progress, 1.5);
+    }
+  }
+  ctx.restore();
+}
+
+// game/touch-actions.ts
 var activePointers = /* @__PURE__ */ new Map();
 var UTILITY_RADIUS = 24;
 var UTILITY_HIT_PADDING = 11;
@@ -34855,23 +34955,23 @@ function layout() {
   const bottom = screen3.height - safe.bottom;
   const lower = bottom - 43;
   const upper = bottom - 102;
-  const charge = { action: "charge", x: right - 218, y: lower, r: 22, color: "#ffd68a" };
+  const charge = { action: "charge", x: right - 218, y: lower, r: 22 };
   const combat = [
-    { action: "melee", x: right - 62, y: lower, r: 40, color: "#ffb16c", text: "HIT" },
-    { action: "jump", x: right - 25, y: upper, r: 22, color: "#7beaff" },
-    { action: "dodge", x: right - 145, y: lower, r: 27, color: "#c3afff" },
-    { action: "shoot", x: right - 176, y: upper, r: 22, color: "#8eb7ff" },
-    { action: "special", x: right - 102, y: upper, r: 24, color: "#ff87c6" },
+    { action: "melee", x: right - 62, y: lower, r: 40 },
+    { action: "jump", x: right - 25, y: upper, r: 22 },
+    { action: "dodge", x: right - 145, y: lower, r: 27 },
+    { action: "shoot", x: right - 176, y: upper, r: 22 },
+    { action: "special", x: right - 102, y: upper, r: 24 },
     charge
   ];
-  if (hasAlly) combat.push({ action: "assist", x: right - 246, y: upper, r: 22, color: "#94f3cc" });
+  if (hasAlly) combat.push({ action: "assist", x: right - 246, y: upper, r: 22 });
   const combatLeft = charge.x - combatHitRadius(charge);
   const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
   const utilityCenter = deterministicMath.min((safe.left + right) / 2, combatLeft - CONTROL_GAP - utilityHalfWidth);
   return [
     ...combat,
-    { action: "pause", x: utilityCenter - UTILITY_SPACING / 2, y: bottom - 39, r: UTILITY_RADIUS, color: "#d4bff2", text: "PAUSE" },
-    { action: "music", x: utilityCenter + UTILITY_SPACING / 2, y: bottom - 39, r: UTILITY_RADIUS, color: "#d4bff2", text: "MUSIC" }
+    { action: "pause", x: utilityCenter - UTILITY_SPACING / 2, y: bottom - 39, r: UTILITY_RADIUS },
+    { action: "music", x: utilityCenter + UTILITY_SPACING / 2, y: bottom - 39, r: UTILITY_RADIUS }
   ];
 }
 function combatHitRadius(button) {
@@ -34911,7 +35011,7 @@ function listenForTouchActions() {
     for (const button of layout()) {
       const dx = event.x - button.x;
       const dy = event.y - button.y;
-      const distance3 = BUTTON_ART[button.action].utility ? deterministicMath.max(deterministicMath.abs(dx) / (button.r + UTILITY_HIT_PADDING), deterministicMath.abs(dy) / 21) : deterministicMath.hypot(dx, dy) / combatHitRadius(button);
+      const distance3 = button.action === "pause" || button.action === "music" ? deterministicMath.max(deterministicMath.abs(dx) / (button.r + UTILITY_HIT_PADDING), deterministicMath.abs(dy) / 21) : deterministicMath.hypot(dx, dy) / combatHitRadius(button);
       if (distance3 <= 1 && distance3 < score) {
         nearest = button;
         score = distance3;
@@ -34924,97 +35024,16 @@ function listenForTouchActions() {
     event.claim();
   } });
 }
-function drawTouchGlyph(ctx, action, x, y, scale = 1) {
-  ctx.beginPath();
-  for (const [[firstX, firstY], ...points] of BUTTON_ART[action].icon) {
-    ctx.moveTo(x + firstX * scale, y + firstY * scale);
-    for (const [px, py] of points) ctx.lineTo(x + px * scale, y + py * scale);
-  }
-  ctx.stroke();
-}
-function drawButton(ctx, button, down, music, progress, pulse) {
-  const { action, text: text2, r, color: color2, x, y } = button;
-  const art = BUTTON_ART[action];
-  const width = art.utility ? r + 8 : r;
-  const height = r * (art.utility ? 0.59 : action === "melee" ? 0.88 : 0.84);
-  const ready = progress >= 1;
-  const accent = action === "special" ? ready ? "#fff0a4" : "#bd83ab" : color2;
-  const bright = down || ready;
-  const ink = bright ? "#24122d" : "#fff3df";
-  const outline = (inset, shift2) => {
-    ctx.beginPath();
-    art.outline.forEach(([xx, yy], i) => {
-      const px = xx * (width - inset), py = yy * (height - inset) + shift2;
-      if (i === 0) ctx.moveTo(px, py);
-      else ctx.lineTo(px, py);
-    });
-    ctx.closePath();
-  };
-  ctx.save();
-  ctx.translate(x, y + (down ? 2 : 0));
-  outline(-2, 2);
-  ctx.fillStyle = "#080514da";
-  ctx.fill();
-  outline(0, 0);
-  const paint2 = ctx.createLinearGradient(0, -height, 0, height);
-  paint2.addColorStop(0, bright ? "#fff4d9" : action === "melee" ? "#75354e" : "#322644");
-  paint2.addColorStop(0.46, bright ? accent : action === "melee" ? "#43233c" : "#1c172c");
-  paint2.addColorStop(1, bright ? color2 : "#21162ae8");
-  ctx.fillStyle = paint2;
-  ctx.fill();
-  ctx.strokeStyle = accent;
-  ctx.lineWidth = action === "melee" || bright ? 2.5 : 1.6;
-  ctx.stroke();
-  outline(4, 0);
-  ctx.strokeStyle = bright ? "#71386080" : accent + "50";
-  ctx.lineWidth = 1;
-  ctx.stroke();
-  if (ready && action === "special") {
-    outline(-4, 0);
-    ctx.strokeStyle = "#ff94d7";
-    ctx.globalAlpha = 0.29 + pulse * 0.1;
-    ctx.stroke();
-    ctx.globalAlpha = 1;
-  }
-  ctx.strokeStyle = bright ? ink : accent;
-  ctx.lineWidth = action === "melee" ? 2.8 : 2;
-  ctx.lineJoin = "round";
-  ctx.lineCap = "round";
-  const hasMeter = action === "charge" || action === "special";
-  drawTouchGlyph(
-    ctx,
-    action,
-    art.utility ? -21 : 0,
-    action === "melee" ? -9 : hasMeter ? -4 : 0,
-    action === "melee" ? 1.55 : 1
-  );
-  if (text2) {
-    ctx.fillStyle = ink;
-    ctx.textAlign = "center";
-    ctx.textBaseline = "middle";
-    ctx.font = art.utility ? "bold 9px sans-serif" : "900 14px sans-serif";
-    ctx.fillText(action === "music" && !music ? "MUSIC \xD7" : text2, art.utility ? 6 : 0, art.utility ? 1 : 15);
-  }
-  if (hasMeter) {
-    for (let i = 0; i < 6; i++) {
-      ctx.fillStyle = i < deterministicMath.round(progress * 6) ? bright ? "#733659" : accent : "#ac83a552";
-      ctx.fillRect(-13 + i * 4.6, 11, 3, 2.5);
-    }
-  }
-  ctx.restore();
-}
 var TouchButtons = class {
   dock = game.texture.create({ id: "phone-control-dock", layer: "hud", width: 640, height: 360, y: 180 });
   buttons = new ViewportTexture("phone-buttons", 23);
   previous = "";
   dockY = -1;
-  age = 0;
   constructor() {
     this.dock.handle.z = -2;
   }
-  render(dt, meter, ally, music, charge) {
+  render(meter, ally, music, charge) {
     hasAlly = ally;
-    this.age += dt;
     const surface = this.buttons.current;
     if (surface.handle !== visibleSurface) {
       visibleSurface = surface.handle;
@@ -35029,9 +35048,8 @@ var TouchButtons = class {
       this.dockY = top;
       this.dock.clear().draw((ctx) => {
         const paint2 = ctx.createLinearGradient(0, top, 0, 360);
-        paint2.addColorStop(0, "#22182f");
-        paint2.addColorStop(0.45, "#131022");
-        paint2.addColorStop(1, "#0c0b19");
+        paint2.addColorStop(0, "#241a30");
+        paint2.addColorStop(1, "#13101f");
         ctx.fillStyle = paint2;
         ctx.fillRect(0, top, 640, 360 - top);
         ctx.fillStyle = "#694a74";
@@ -35043,21 +35061,20 @@ var TouchButtons = class {
     }
     const buttons = layout();
     const held = new Set(activePointers.values());
-    const pulse = meter >= 100 ? deterministicMath.floor(this.age * 9) % 6 : 0;
     const signature = JSON.stringify([
       buttons.map((b) => [b.x, b.y, b.r]),
       [...held],
       deterministicMath.floor(meter),
       music,
-      deterministicMath.floor(charge * 12),
-      pulse
+      deterministicMath.floor(charge * 22)
     ]);
     if (signature === this.previous) return;
     this.previous = signature;
     surface.clear().draw((ctx) => {
       for (const button of buttons) {
         const progress = button.action === "special" ? meter / 100 : button.action === "charge" ? charge : 0;
-        drawButton(ctx, button, held.has(button.action), music, progress, pulse);
+        const size = button.action === "melee" ? 84 : button.action === "pause" || button.action === "music" ? 64 : button.r * 2 + 5;
+        drawTouchGlyph(ctx, button.action, button.x, button.y, size, held.has(button.action), progress, music);
       }
     });
   }
@@ -36867,10 +36884,10 @@ var DistrictBoss = class {
 };
 
 // game/hud.ts
-var GOLD = "#ffe070";
+var GOLD2 = "#ffe070";
 var WHITE2 = "#fff3e6";
 var MUTED = "#b7aacd";
-var PINK = "#ff75c4";
+var PINK2 = "#ff75c4";
 var CYAN = "#91f6ff";
 function label(text2, x, y, size = 12, color2 = WHITE2, align4 = "center", z = 7, family = "sans-bold") {
   return game.typography.label({
@@ -36918,7 +36935,7 @@ var Hud = class {
     top.rect(500, 8, 1, 34, "#493452");
     this.center(label("HEALTH", 52, 12, 8, WHITE2, "left"));
     this.center(label("SHOT", 52, 33, 8, CYAN, "left"));
-    this.center(label("SPECIAL", 147, 33, 8, GOLD, "left"));
+    this.center(label("SPECIAL", 147, 33, 8, GOLD2, "left"));
     this.center(label("ASSIST", 292, 40, 9, MUTED, "left"));
     this.center(label("SCORE", 512, 24, 8, MUTED, "left"));
     this.center(label(fighter.name.toUpperCase(), 619, 39, 8, fighter.color, "right"));
@@ -36976,9 +36993,9 @@ var Hud = class {
   banner = game.texture.create({ id: "stage-banner", layer: "hud", width: 390, height: 39, x: 320, y: 96 });
   route = game.texture.create({ id: "district-progress", layer: "hud", width: 194, height: 3, x: 389, y: 28 });
   routePixels = -1;
-  score = this.center(label("", 619, 23, 17, GOLD, "right", 7, "mono-bold"));
+  score = this.center(label("", 619, 23, 17, GOLD2, "right", 7, "mono-bold"));
   token = this.center(label("", 356, 40, 10, CYAN, "left"));
-  message = this.center(label("", 320, 96, 19, GOLD, "center", 10));
+  message = this.center(label("", 320, 96, 19, GOLD2, "center", 10));
   foot = this.center(label("", 320, 344, 11, WHITE2));
   bossLabel = this.center(label("", 320, 66, 10, "#ffd0b0"));
   hp;
@@ -38158,7 +38175,7 @@ var Play = {
       distance3 = deterministicMath.max(distance3, h.x);
       view.render(c, dt, age, hazards);
       hud.render(c, hint(), intro, index, (distance3 - 96) / (destinationX - 96));
-      buttons?.render(dt, h.meter, c.assists.length > 0, musicEnabled(), h.chargeProgress);
+      buttons?.render(h.meter, c.assists.length > 0, musicEnabled(), h.chargeProgress);
       if (h.hp <= 0) {
         lost += dt;
         if (lost > 1) finish(false);
@@ -38255,7 +38272,7 @@ var WorldMap = {
     const map = game.texture.create({ id: "snack-city-map", layer: "hud", width: 640, height: 360, x: 320, y: 180 });
     map.handle.z = 2;
     label("SNACK CITY", 28, 23, 23, WHITE2, "left", 8);
-    label(progress.cleared.length + " / 3 DISTRICTS SECURED", 606, 20, 10, GOLD, "right", 8, "mono-bold");
+    label(progress.cleared.length + " / 3 DISTRICTS SECURED", 606, 20, 10, GOLD2, "right", 8, "mono-bold");
     label("TITLE", 605, 37, 10, MUTED, "right", 8);
     const story = progress.complete ? "The relays are down. A message marked DOOM BURGER just came in." : CHAPTERS[progress.last]?.clear ?? "Follow the signal to the kitchen relay.";
     label(story, 29, 46, 11, "#e5c9ef", "left", 8);
@@ -38285,7 +38302,7 @@ var WorldMap = {
       const chapter = CHAPTERS[selected];
       const active2 = available.includes(selected);
       heading.text = chapter?.name ?? (selected === BONUS ? "After Hours" : "Snack City is safe");
-      heading.color = nodes2[selected]?.color ?? GOLD;
+      heading.color = nodes2[selected]?.color ?? GOLD2;
       briefing.text = chapter ? progress.cleared.includes(selected) ? chapter.clear : chapter.briefing : selected === BONUS ? active2 ? "Doom Burger is waiting on the old strip." : "Secure all three districts to unlock this fight." : "Bank your score and celebrate with the crew.";
       itinerary.text = chapter ? chapter.levels.map((level) => STAGES[level].title).join("  \u203A  ") : selected === BONUS ? "BOSS  /  DOOM BURGER" : "FINAL SCORE  /  " + String(progress.score).padStart(7, "0");
       if (chapter && !active2 && !progress.cleared.includes(selected)) briefing.text = "Defeat the Iron Oven to open this route.";
@@ -38404,10 +38421,10 @@ var go = (name) => () => game.scenes.go(name);
 var chooseFighter = go("fighters");
 var title = go("title");
 var pauseBack = () => game.scenes.pop();
-var INK = "#100e26";
-var PAPER = "#fff0d4";
+var INK2 = "#100e26";
+var PAPER2 = "#fff0d4";
 var HOT = "#ff9867";
-function type(text2, x, y, size = 13, color2 = PAPER, align4 = "left", z = 14, weight = "sans-bold") {
+function type(text2, x, y, size = 13, color2 = PAPER2, align4 = "left", z = 14, weight = "sans-bold") {
   return game.typography.label({
     text: text2,
     x,
@@ -38445,7 +38462,7 @@ function menu(choices, x, y, width, back, row = 32) {
   });
   bg.handle.z = 28;
   const readText = (choice) => typeof choice.text === "function" ? choice.text() : choice.text;
-  const labels = choices.map((choice, i) => type(readText(choice), left + 30, y + i * row, 15, PAPER, "left", 30));
+  const labels = choices.map((choice, i) => type(readText(choice), left + 30, y + i * row, 15, PAPER2, "left", 30));
   const select = (index) => {
     if (selected === index) return;
     selected = index;
@@ -38494,7 +38511,7 @@ function menu(choices, x, y, width, back, row = 32) {
       ctx.stroke();
     });
     labels.forEach((label2, i) => {
-      label2.color = i === selected && deterministicMath.abs(selection - i) < 0.44 ? INK : PAPER;
+      label2.color = i === selected && deterministicMath.abs(selection - i) < 0.44 ? INK2 : PAPER2;
     });
   };
   repaint();
@@ -38566,7 +38583,7 @@ function backdrop(stage) {
   panel.line(27, 26, 614, 26, 1, "#a170a3", 0.63);
   panel.line(27, 329, 614, 329, 1, "#a170a3", 0.49);
   panel.rect(26, 25, 31, 2, HOT);
-  panel.rect(585, 328, 29, 2, PINK);
+  panel.rect(585, 328, 29, 2, PINK2);
 }
 function footer(text2, y = 343) {
   type(text2, 320, y, 10, "#e4cbe2", "center", 25);
@@ -38655,7 +38672,7 @@ var Title = {
       { text: "Credits", action: () => openCredits("title") }
     ], 144, resume ? 201 : 204, 226, void 0, resume ? 28 : 32);
     type("HIGH SCORE", 606, 296, 10, "#f5c0c8", "right");
-    type(String(game.save.read("best", 0)).padStart(7, "0"), 606, 313, 16, GOLD, "right", 14, "mono-bold");
+    type(String(game.save.read("best", 0)).padStart(7, "0"), 606, 313, 16, GOLD2, "right", 14, "mono-bold");
     if (touchMode()) {
       type("Tap a menu item", 29, 342, 11, WHITE2);
       type("Turn your phone sideways to play", 606, 342, 11, WHITE2, "right");
@@ -38674,15 +38691,15 @@ var FighterSelect = {
     let selected = FIGHTERS.indexOf(saved), age = 0, previewAge = 0, previousAxis = 0;
     const frame = game.texture.create({ layer: "hud", id: "fighter-select-frame" });
     frame.handle.z = 5;
-    type("SELECT YOUR FIGHTER", 36, 48, 23, PAPER, "left", 15);
-    type("BACK", 574, 49, 11, PAPER, "center", 15);
-    type("FIGHT  \u203A", 535, 208, 17, INK, "center", 15);
-    const name = type("", 268, 86, 26, PAPER, "left", 15);
+    type("SELECT YOUR FIGHTER", 36, 48, 23, PAPER2, "left", 15);
+    type("BACK", 574, 49, 11, PAPER2, "center", 15);
+    type("FIGHT  \u203A", 535, 208, 17, INK2, "center", 15);
+    const name = type("", 268, 86, 26, PAPER2, "left", 15);
     const role = type("", 269, 110, 10, CYAN, "left", 15, "mono-bold");
-    const quote = type("", 269, 132, 14, PAPER, "left", 15, "sans");
+    const quote = type("", 269, 132, 14, PAPER2, "left", 15, "sans");
     type("SUPER", 269, 157, 9, MUTED, "left", 15, "mono-bold");
     const power = type("", 319, 157, 16, HOT, "left", 15);
-    const hint = type("", 269, 178, 12, PAPER, "left", 15, "sans");
+    const hint = type("", 269, 178, 12, PAPER2, "left", 15, "sans");
     const preview = game.spawn({
       id: "fighter-preview",
       texture: saved.art,
@@ -38697,7 +38714,7 @@ var FighterSelect = {
     FIGHTERS.forEach((fighter, i) => {
       const center = cardX(i) + 43;
       game.spawn({ texture: fighter.art, x: center, y: 264, width: 66, height: 50, layer: "hud", z: 8 });
-      fighter.card.forEach((line, row) => type(line, center, 294 + row * 13, 10, PAPER, "center", 15));
+      fighter.card.forEach((line, row) => type(line, center, 294 + row * 13, 10, PAPER2, "center", 15));
     });
     const choose = (next) => {
       const fighter = FIGHTERS[next];
@@ -38813,7 +38830,7 @@ var Controls = {
       ["Special / call ally", "I / U", "LB / RT"],
       ["Pause / mute", "Esc or P / M", "Start / Back"]
     ];
-    type("KEYBOARD", 267, 88, 11, PAPER);
+    type("KEYBOARD", 267, 88, 11, PAPER2);
     const touch = touchMode();
     const phone = [
       "Thumbstick",
@@ -38835,22 +38852,18 @@ var Controls = {
       ["special", "assist"],
       ["pause", "music"]
     ];
-    type(touch ? "TOUCH" : "GAMEPAD", 446, 88, 11, PAPER);
+    type(touch ? "TOUCH" : "GAMEPAD", 446, 88, 11, PAPER2);
     rows.forEach(([action, keys, pad], i) => {
       const y = 109 + 21 * i;
       grid.rect(42, y - 10, 556, 20, i % 2 ? "#211735" : "#19172d", 0.88);
       grid.line(42, y + 10, 598, y + 10, 1, "#886580", 0.43);
-      type(action, 52, y, 13, PAPER);
+      type(action, 52, y, 13, PAPER2);
       type(keys, 267, y, 12, "#d1eff7", "left", 14, "sans");
       type(touch ? phone[i] : pad, 446, y, 12, "#d1eff7", "left", 14, "sans");
     });
     if (touch) grid.draw((ctx) => {
-      ctx.strokeStyle = "#f4c9ef";
-      ctx.lineWidth = 1.6;
-      ctx.lineCap = "round";
-      ctx.lineJoin = "round";
       icons.forEach((actions, i) => actions.forEach((action, j) => {
-        drawTouchGlyph(ctx, action, 428 - (actions.length - 1 - j) * 24, 109 + 21 * i, 0.66);
+        drawTouchGlyph(ctx, action, 428 - (actions.length - 1 - j) * 24, 109 + 21 * i, 23);
       }));
     });
     type(touch ? "Auto-hit attacks nearby foes when you are free to swing." : "Land melee hits to refill shots and charge your special.", 42, 280, 11, MUTED, "left", 14, "sans");
@@ -38878,7 +38891,7 @@ var PROLOGUE = [
   },
   {
     card: "The Night Shift",
-    color: GOLD,
+    color: GOLD2,
     icon: "hero",
     width: 167,
     height: 125,
@@ -38889,10 +38902,10 @@ var Opening = {
   name: "opening",
   enter() {
     backdrop(0);
-    const next = type("", 320, 62, 36, GOLD, "center");
+    const next = type("", 320, 62, 36, GOLD2, "center");
     next.shadow = { color: "#66295d", x: 2, y: 3 };
-    const line1 = type("", 320, 230, 16, PAPER, "center", 14, "sans");
-    const line2 = type("", 320, 254, 16, PAPER, "center", 14, "sans");
+    const line1 = type("", 320, 230, 16, PAPER2, "center", 14, "sans");
+    const line2 = type("", 320, 254, 16, PAPER2, "center", 14, "sans");
     const motif = game.texture.create({ layer: "hud", id: "story-frame" });
     motif.handle.z = 4;
     motif.fill([
@@ -38952,7 +38965,7 @@ var Pause = {
     const panel = game.texture.create({ layer: "hud", id: "pause-frame", width: 640, height: 360, y: 180 });
     panel.handle.z = 21;
     panel.fill([{ x: 190, y: 53 }, { x: 480, y: 53 }, { x: 455, y: 312 }, { x: 171, y: 312 }], "#19122d");
-    panel.line(190, 53, 479, 53, 2, PINK);
+    panel.line(190, 53, 479, 53, 2, PINK2);
     panel.line(172, 312, 454, 312, 1, "#7c547d");
     const heading = headline("paused", 320, 85);
     const layout2 = () => {
@@ -38997,7 +39010,7 @@ var GameOver = {
       z: 4
     });
     type("Score", 283, 208, 12, MUTED, "right");
-    type(String(result.score).padStart(7, "0"), 298, 208, 19, GOLD, "left", 14, "mono-bold");
+    type(String(result.score).padStart(7, "0"), 298, 208, 19, GOLD2, "left", 14, "mono-bold");
     const choices = [{ text: "Retry Level", action: retryLevel }];
     if (inBonus()) choices.push({ text: "World Map", action: showWorldMap });
     choices.push({ text: "Title Screen", action: title });
@@ -39043,7 +39056,7 @@ var Victory = {
       320,
       204,
       13,
-      PAPER,
+      PAPER2,
       "center",
       14,
       "mono-bold"
@@ -39070,9 +39083,9 @@ var Credits = {
     headline("credits", 111, 59);
     type("Pizza Fish Taco and Friends", 42, 110, 20, CYAN);
     type("Character and world references", 42, 154, 13, MUTED);
-    type("Morgan", 42, 173, 17, PAPER);
+    type("Morgan", 42, 173, 17, PAPER2);
     type("Sprites, stages, music and game code", 42, 211, 13, MUTED);
-    type("Codex", 42, 230, 17, PAPER);
+    type("Codex", 42, 230, 17, PAPER2);
     type("Built with Phaser AE", 42, 272, 13, "#f5a5ce");
     menu([{ text: "Back", action: go(returnTo) }], 517, 306, 160, go(returnTo));
   }
@@ -39085,7 +39098,7 @@ var Rotate = {
     panel.rect(0, 0, 640, 360, "#100b23", 0.88);
     panel.rect(152, 107, 336, 147, "#1e1436");
     panel.line(152, 107, 488, 107, 2, HOT);
-    type("Turn your phone sideways", 320, 169, 26, PAPER, "center", 51);
+    type("Turn your phone sideways", 320, 169, 26, PAPER2, "center", 51);
     type("Your game will resume in landscape.", 320, 204, 16, CYAN, "center", 51, "sans");
   }
 };
