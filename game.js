@@ -5274,10 +5274,10 @@ var KernelAssets = class {
       }
       case "font": {
         if (!fetchImpl || typeof FontFace === "undefined" || typeof document === "undefined") return null;
-        const face2 = new FontFace(it.family, `url(${it.url})`);
-        await face2.load();
-        document.fonts.add(face2);
-        return face2;
+        const face = new FontFace(it.family, `url(${it.url})`);
+        await face.load();
+        document.fonts.add(face);
+        return face;
       }
     }
   }
@@ -15661,12 +15661,12 @@ function createFace(api, source, size) {
   };
 }
 function createLabel(api, spec, defaultFace) {
-  const face2 = spec.font ?? defaultFace;
+  const face = spec.font ?? defaultFace;
   let content = spec.text, x = spec.x, y = spec.y, scale = spec.scale ?? 1, tint = spec.tint ?? "#ffffff";
   let outline = spec.outline ?? null, shadow = spec.shadow ?? null;
   const hex2 = (c) => /^#[0-9a-f]{3,4}$/i.test(c) ? "#" + [...c.slice(1)].map((d) => d + d).join("") : c;
   const style = () => ({
-    fontSize: face2.size * scale,
+    fontSize: face.size * scale,
     color: hex2(tint),
     lineHeight: 1.3,
     letterSpacing: (spec.spacing ?? 0) * scale,
@@ -15674,7 +15674,7 @@ function createLabel(api, spec, defaultFace) {
     ...shadow ? { shadow: { color: hex2(shadow.color), offset: [shadow.x * scale, shadow.y * scale] } } : {}
   });
   const shaped = (v) => v === "" ? " " : v;
-  const paragraph = api.write({ font: face2.font, text: shaped(content), x, y, style: style(), ...spec.layer ? { layer: spec.layer } : {}, ...spec.z === void 0 ? {} : { z: spec.z } });
+  const paragraph = api.write({ font: face.font, text: shaped(content), x, y, style: style(), ...spec.layer ? { layer: spec.layer } : {}, ...spec.z === void 0 ? {} : { z: spec.z } });
   const h = paragraph.object;
   let shown = true;
   const show2 = () => {
@@ -15689,7 +15689,7 @@ function createLabel(api, spec, defaultFace) {
   show2();
   h.alpha = spec.alpha ?? 1;
   h.snap();
-  if (!face2.loaded) void face2.ready.then(() => {
+  if (!face.loaded) void face.ready.then(() => {
     if (!paragraph.disposed) place();
   }, () => {
   });
@@ -26902,38 +26902,38 @@ function createFontFace(library, source, config = {}) {
     aggregatePromise: void 0,
     aggregateLoaded: false
   };
-  let face2;
+  let face;
   const defaultFormat = formats2[0];
   const base = {
     family,
     format: defaultFormat,
     get face() {
-      return face2;
+      return face;
     },
     get default() {
-      return face2;
+      return face;
     },
     get disposed() {
       return owner.disposed;
     },
     load() {
-      return loadFontFace(face2);
+      return loadFontFace(face);
     },
     formats() {
-      return fontFaceFormats(face2);
+      return fontFaceFormats(face);
     },
     isLoaded() {
-      return isFontFaceLoaded(face2);
+      return isFontFaceLoaded(face);
     },
     clone() {
-      return cloneFontFace(face2);
+      return cloneFontFace(face);
     },
     dispose() {
-      disposeFontFace(face2);
+      disposeFontFace(face);
     }
   };
-  face2 = base;
-  faceStates.set(face2, { face: state, format: defaultFormat, aggregate: true, promises: /* @__PURE__ */ new Map() });
+  face = base;
+  faceStates.set(face, { face: state, format: defaultFormat, aggregate: true, promises: /* @__PURE__ */ new Map() });
   for (const format of formats2) {
     const key = formatName(format);
     if (selections2.has(key)) throw new TypeError(`FontFace format ${JSON.stringify(key)} is declared more than once`);
@@ -26941,7 +26941,7 @@ function createFontFace(library, source, config = {}) {
     selection = Object.freeze({
       family,
       format,
-      face: face2,
+      face,
       load() {
         return loadDeclaredFontFaceSelection(selection);
       },
@@ -26958,24 +26958,24 @@ function createFontFace(library, source, config = {}) {
   }
   Object.freeze(base);
   const generation = nextCatalogGeneration++;
-  catalog.set(family, { generation, face: new WeakRef(face2) });
-  faceFinalizer.register(face2, { family, generation, owner }, face2);
-  return face2;
+  catalog.set(family, { generation, face: new WeakRef(face) });
+  faceFinalizer.register(face, { family, generation, owner }, face);
+  return face;
 }
-function disposeFontFace(face2) {
-  if (typeof face2 !== "object" && typeof face2 !== "function" || face2 === null) {
+function disposeFontFace(face) {
+  if (typeof face !== "object" && typeof face !== "function" || face === null) {
     throw new TypeError("FontFace.dispose() requires an authentic FontFace declaration");
   }
-  const selection = faceStates.get(face2);
+  const selection = faceStates.get(face);
   if (selection === void 0) throw new TypeError("FontFace.dispose() requires an authentic FontFace declaration");
-  if (selection.format !== face2.format || selection.face.family !== face2.family) {
+  if (selection.format !== face.format || selection.face.family !== face.family) {
     throw new TypeError("FontFace.dispose() must be called on the declaration, not a format selection");
   }
   if (selection.face.owner.disposed) return;
-  faceFinalizer.unregister(face2);
+  faceFinalizer.unregister(face);
   disposeFontFaceState(selection.face);
   const current = catalog.get(selection.face.family);
-  if (current?.face.deref() === face2) catalog.delete(selection.face.family);
+  if (current?.face.deref() === face) catalog.delete(selection.face.family);
 }
 function fontFaceSelectionState(selection) {
   if (typeof selection !== "object" && typeof selection !== "function" || selection === null) {
@@ -27054,8 +27054,8 @@ var FontFaceHandleStore = class {
     if (this.#disposed) throw new Error("font handle store has been disposed");
   }
 };
-function loadFontFace(face2) {
-  const selection = fontFaceSelectionState(face2);
+function loadFontFace(face) {
+  const selection = fontFaceSelectionState(face);
   const state = selection.face;
   if (!selection.aggregate) throw new TypeError("FontFace aggregate loading requires the declaration object");
   if (state.aggregatePromise !== void 0) return state.aggregatePromise;
@@ -27066,7 +27066,7 @@ function loadFontFace(face2) {
         throw new DOMException("FontFace load owner was disposed", "AbortError");
       }
       state.aggregateLoaded = true;
-      return face2;
+      return face;
     },
     (error) => {
       if (state.aggregatePromise === promise) {
@@ -27207,8 +27207,8 @@ function createLoadedFaceRecord(owner, family, library, fontSource, raster, form
   record2 = { promise, font: void 0 };
   return record2;
 }
-function fontFaceFormats(face2) {
-  const selected = fontFaceSelectionState(face2);
+function fontFaceFormats(face) {
+  const selected = fontFaceSelectionState(face);
   if (!selected.aggregate) throw new TypeError("FontFace format inspection requires the declaration object");
   const state = selected.face;
   if (state.formatsPromise !== void 0) return state.formatsPromise;
@@ -27252,8 +27252,8 @@ function openDeclaredFontFaceSource(library, source, initialRasters, signal) {
   if (isSerializedFontFace(source)) return openSerializedFontFaceSource(library, source, { signal });
   return fontFaceLoadInput(source).then((input) => openFontFaceSource(library, input, initialRasters, { signal }));
 }
-function isFontFaceLoaded(face2) {
-  const selected = fontFaceSelectionState(face2);
+function isFontFaceLoaded(face) {
+  const selected = fontFaceSelectionState(face);
   if (!selected.aggregate) return false;
   return selected.face.aggregateLoaded;
 }
@@ -29068,7 +29068,7 @@ function typography2(options = {}) {
         return out;
       };
       const arrived = (font) => standIns.get(font)?.font ?? font;
-      const name = `typography-${++serial}`, fonts = /* @__PURE__ */ new Set(), faces = /* @__PURE__ */ new Set();
+      const name = `typography-${++serial}`, fonts = /* @__PURE__ */ new Set(), faces2 = /* @__PURE__ */ new Set();
       const texts = /* @__PURE__ */ new Map();
       const detached = /* @__PURE__ */ new Map();
       let gpu3d, gpu3dKey = "";
@@ -29263,24 +29263,24 @@ function typography2(options = {}) {
             }
           }
           const selected = selectFormat(format);
-          const face2 = typography.fontFace(
+          const face = typography.fontFace(
             source instanceof ArrayBuffer ? new Blob([source], {
               type: new DataView(source).getUint32(0) === 1735152710 ? "model/gltf-binary" : "font/ttf"
             }) : source,
             { format: selected }
           );
           try {
-            await face2.load();
+            await face.load();
           } catch (error) {
-            face2.dispose();
+            face.dispose();
             throw error;
           }
           if (disposed) {
-            face2.dispose();
+            face.dispose();
             throw new Error("Typography disposed while loading a font");
           }
-          const font = getRoot().fonts.acquire(face2);
-          faces.add(face2);
+          const font = getRoot().fonts.acquire(face);
+          faces2.add(face);
           fonts.add(font);
           return font;
         },
@@ -29700,8 +29700,8 @@ function typography2(options = {}) {
         root = void 0;
         for (const font of fonts) font.dispose();
         fonts.clear();
-        for (const face2 of faces) face2.dispose();
-        faces.clear();
+        for (const face of faces2) face.dispose();
+        faces2.clear();
         disposeNative();
       });
       k.registry.add("typography", { name: "typography", ...api });
@@ -32609,15 +32609,15 @@ function bars(options = {}) {
       const defaultFamily = options.font ?? "sans-bold";
       let textReady = false;
       const familiesWanted = /* @__PURE__ */ new Set();
-      const faces = /* @__PURE__ */ new Map();
+      const faces2 = /* @__PURE__ */ new Map();
       const faceFor = (family, size) => {
         const key = `${family}|${size}`;
-        let face2 = faces.get(key);
-        if (!face2) {
-          face2 = typography3.face({ family, size });
-          faces.set(key, face2);
+        let face = faces2.get(key);
+        if (!face) {
+          face = typography3.face({ family, size });
+          faces2.set(key, face);
         }
-        return face2;
+        return face;
       };
       k.hooks.on("boot.domReady", async () => {
         await typography3.prepare([...familiesWanted]);
@@ -33172,21 +33172,21 @@ function bars(options = {}) {
           const cross2 = this.cross(at.w, at.h);
           const size = look.size ?? (inside ? this.ring && pos === "center" ? deterministicMath.max(10, deterministicMath.round((deterministicMath.min(at.w, at.h) / 2 - this.band(at.w, at.h)) * 0.62)) : deterministicMath.max(9, deterministicMath.round(cross2 * 0.6)) : 15);
           const family = look.family ?? defaultFamily, faceKey = spec.font ? "own" : `${family}|${size}`;
-          const face2 = spec.font ?? faceFor(family, size);
-          if (faceKey !== this.labelFaceKey || face2 !== this.labelFace) {
+          const face = spec.font ?? faceFor(family, size);
+          if (faceKey !== this.labelFaceKey || face !== this.labelFace) {
             this.dropLabels();
             this.labelFaceKey = faceKey;
-            this.labelFace = face2;
+            this.labelFace = face;
           }
           const scale = spec.font && look.size ? look.size / spec.font.size : 1;
           const text2 = this.formatText();
           this.lastText = text2;
           const color2 = fl.labelColor ?? look.color ?? "#ffffff", fillColor = look.fillColor ?? color2;
-          const outline = look.outline === false ? null : { color: look.outline ?? "#000000b0", width: face2.size * scale * (look.outlineWidth ?? 0.08) };
+          const outline = look.outline === false ? null : { color: look.outline ?? "#000000b0", width: face.size * scale * (look.outlineWidth ?? 0.08) };
           const geo = this.edgeGeometry(at);
           const twoTone = fillColor !== color2 && inside && !this.ring && this.dirCode < 4 && deterministicMath.abs(at.rot) < 1e-4;
           const make = () => {
-            const lab = typography3.label({ text: text2, x: at.x, y: at.y, font: face2, tint: color2, scale, layer: this.handle.layer, z: this.handle.z + 0.01, ...outline ? { outline } : {} });
+            const lab = typography3.label({ text: text2, x: at.x, y: at.y, font: face, tint: color2, scale, layer: this.handle.layer, z: this.handle.z + 0.01, ...outline ? { outline } : {} });
             lab.object.snap();
             return lab;
           };
@@ -34951,7 +34951,7 @@ var icons = {
     "..pppppppppp...."
   ]
 };
-var face = [
+var attackFace = [
   ".......pppppppppppp.......",
   ".....ppggggggggggggpp.....",
   "....pggggggggggggggggp....",
@@ -34977,6 +34977,27 @@ var face = [
   ".....ppsssssssssssspp.....",
   ".......pppppppppppp......."
 ];
+var faceInsets = {
+  // Each pair is one step on the left and right edges. Each step is two pixels high.
+  jump: [[11, 11], [9, 9], [7, 7], [5, 5], [3, 3], [2, 2], [2, 2], [2, 2], [3, 3], [4, 4], [6, 6], [8, 8]],
+  dodge: [[13, 13], [7, 7], [4, 4], [2, 2], [0, 0], [0, 0], [0, 0], [0, 0], [2, 2], [4, 4], [7, 7], [13, 13]],
+  shoot: [[13, 13], [4, 12], [2, 9], [1, 6], [0, 3], [0, 0], [0, 0], [1, 3], [2, 6], [4, 9], [6, 12], [13, 13]],
+  charge: [[9, 9], [8, 8], [5, 5], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [4, 4], [5, 5], [7, 7]],
+  special: [[11, 11], [8, 8], [6, 6], [4, 4], [2, 2], [0, 0], [0, 0], [2, 2], [4, 4], [6, 6], [8, 8], [11, 11]],
+  assist: [[6, 6], [4, 4], [2, 2], [1, 1], [1, 1], [1, 1], [1, 1], [1, 1], [2, 2], [4, 4], [7, 7], [10, 10]]
+};
+var faces = Object.fromEntries(Object.entries(faceInsets).map(([action, insets]) => {
+  const rows = insets.flatMap(([left, right]) => [[left, right], [left, right]]);
+  const fill = rows.map(([left, right], y) => Array.from({ length: 26 }, (_, x) => {
+    if (x < left || x >= 26 - right) return ".";
+    const [aboveLeft, aboveRight] = rows[y - 1] ?? [13, 13];
+    const [belowLeft, belowRight] = rows[y + 1] ?? [13, 13];
+    if (x === left || x === 25 - right || x < aboveLeft || x >= 26 - aboveRight || x < belowLeft || x >= 26 - belowRight) return "p";
+    if (y < 6 || y < 13 && x <= left + 2) return "g";
+    return y >= 19 || x >= 23 - right ? "s" : "d";
+  }).join(""));
+  return [action, fill];
+}));
 function isCombatTouchAction(action) {
   return action !== "pause" && action !== "music";
 }
@@ -35019,7 +35040,7 @@ function drawTouchGlyph(ctx, action, x, y, size, down = false, progress = 0, mus
   const [color2, shadow] = colors[action];
   const ready = progress >= 1;
   const lit = down || ready;
-  paintPixels(ctx, -13, -12, face, {
+  paintPixels(ctx, -13, -12, action === "melee" ? attackFace : faces[action], {
     p: INK,
     g: lit ? PAPER : color2,
     s: lit ? color2 : shadow,
@@ -35175,16 +35196,16 @@ function layout() {
   const safe = game.kernel.opts.safe ?? { left: 0, right: 0, top: 0, bottom: 0 };
   const right = screen3.width - safe.right;
   const bottom = screen3.height - safe.bottom;
-  const roll = { action: "dodge", x: right - 135, y: bottom - 57, r: 22 };
+  const roll = { action: "dodge", x: right - 125, y: bottom - 51, r: 22 };
   const combat = [
-    { action: "melee", x: right - 72, y: bottom - 65, r: 34 },
+    { action: "melee", x: right - 68, y: bottom - 63, r: 34 },
     { action: "jump", x: right - 25, y: bottom - 104, r: 20 },
     roll,
-    { action: "special", x: right - 84, y: bottom - 126, r: 23 },
-    { action: "charge", x: right - 141, y: bottom - 113, r: 20 },
-    { action: "shoot", x: right - 32, y: bottom - 156, r: 20 }
+    { action: "special", x: right - 80, y: bottom - 121, r: 23 },
+    { action: "charge", x: right - 131, y: bottom - 101, r: 20 },
+    { action: "shoot", x: right - 27, y: bottom - 153, r: 20 }
   ];
-  if (hasAlly) combat.push({ action: "assist", x: right - 128, y: bottom - 164, r: 20 });
+  if (hasAlly) combat.push({ action: "assist", x: right - 122, y: bottom - 150, r: 20 });
   const combatLeft = roll.x - combatHitRadius(roll);
   const utilityHalfWidth = UTILITY_SPACING / 2 + UTILITY_RADIUS + UTILITY_HIT_PADDING;
   const utilityCenter = deterministicMath.min((safe.left + right) / 2, combatLeft - CONTROL_GAP - utilityHalfWidth);
@@ -36266,10 +36287,10 @@ var Combat = class {
     });
     this.pickups.push({ x, y, drop, age: 0, body, badge });
   }
-  impact(x, y, color2, radius = 23, style = "burst", duration = 0.24, face2 = 1) {
-    this.impacts.push({ x, y, color: color2, radius, style, life: duration, duration, face: face2 });
+  impact(x, y, color2, radius = 23, style = "burst", duration = 0.24, face = 1) {
+    this.impacts.push({ x, y, color: color2, radius, style, life: duration, duration, face });
   }
-  fire(kind, x, y, face2, altitude = 0, slope = 0) {
+  fire(kind, x, y, face, altitude = 0, slope = 0) {
     const { sprite, speed, life } = SHOTS[kind];
     const texture = kind === "slice" && this.hero.fighter !== DEFAULT_FIGHTER ? this.hero.fighter.art + "-shot" : sprite;
     const body = game.spawn({
@@ -36281,8 +36302,8 @@ var Combat = class {
       layer: "world",
       z: y * 2 + 8
     });
-    body.sx = face2;
-    this.shots.push({ x, y, kind, body, vx: speed * face2, vy: slope, z: altitude, life });
+    body.sx = face;
+    this.shots.push({ x, y, kind, body, vx: speed * face, vy: slope, z: altitude, life });
   }
   damageFoe(foe, damage, direction2, heavy = false) {
     foe.hit(damage, direction2, heavy);
@@ -36477,15 +36498,15 @@ var Combat = class {
       this.damageBoss(deterministicMath.round(damage * 0.78), true);
     }
   }
-  superEffect(kind, x, y, face2, life, height = 0) {
-    this.superEffects.push({ kind, x, y, face: face2, life, age: 0, height });
+  superEffect(kind, x, y, face, life, height = 0) {
+    this.superEffects.push({ kind, x, y, face, life, age: 0, height });
   }
   stepPower(dt) {
     const power = this.power;
     if (!power) return;
     const h = this.hero;
     const { x, y } = h;
-    const { kind, face: face2 } = power;
+    const { kind, face } = power;
     const motion = SUPER_MOTION[kind];
     power.age += dt;
     const age = power.age - motion.release;
@@ -36498,7 +36519,7 @@ var Combat = class {
         if (first) {
           power.x = x;
           power.y = y;
-          this.superEffect(kind, x, y, face2, 0.61, h.height);
+          this.superEffect(kind, x, y, face, 0.61, h.height);
           game.feel.shake(4, 0.22);
         }
         this.powerHit(power.x, power.y, 174 * range, 75 * range, 67, power);
@@ -36517,7 +36538,7 @@ var Combat = class {
         if (age < motion.travel + dt) {
           this.powerHit(x, y, 46, 32, 77, power);
           if (age * 30 >= power.marks) {
-            this.superEffect(kind, x, y, face2, 0.28, h.height);
+            this.superEffect(kind, x, y, face, 0.28, h.height);
             power.marks++;
           }
         }
@@ -36526,14 +36547,14 @@ var Combat = class {
       case "bounce":
         if (age < 0.28 || !h.landed && h.height > 0 && power.age < 0.98) break;
         this.powerHit(x, y, 119, 58, 81, power);
-        this.superEffect(kind, x, y, face2, 0.66);
+        this.superEffect(kind, x, y, face, 0.66);
         game.sound.play("power-land");
         game.feel.shake(5.6, 0.25);
         this.power = null;
         break;
       case "flame":
         if (power.marks < 5 && age >= power.marks * 0.061) {
-          const at = clamp3(x - 13 * face2, this.left, this.right);
+          const at = clamp3(x - 13 * face, this.left, this.right);
           this.zones.push({
             x: at,
             y,
@@ -36545,7 +36566,7 @@ var Combat = class {
             damage: 62,
             power
           });
-          this.superEffect(kind, at, y, face2, 0.35, h.height);
+          this.superEffect(kind, at, y, face, 0.35, h.height);
           power.marks++;
         }
         if (power.age >= motion.duration) this.power = null;
@@ -36553,7 +36574,7 @@ var Combat = class {
       case "syrup":
         if (!first) break;
         for (const [i, lane] of [-27, 0, 27].entries()) {
-          const at = clamp3(x + face2 * (49 + i * 46), this.left, this.right);
+          const at = clamp3(x + face * (49 + i * 46), this.left, this.right);
           const row = clamp3(y + lane, STREET_TOP, STREET_BOTTOM);
           const delay = 0.19 + i * 0.1;
           this.zones.push({
@@ -36568,7 +36589,7 @@ var Combat = class {
             power
           });
         }
-        this.superEffect(kind, x, y, face2, 0.49, h.height);
+        this.superEffect(kind, x, y, face, 0.49, h.height);
         game.feel.shake(3.3, 0.17);
         this.power = null;
         break;
@@ -36576,7 +36597,7 @@ var Combat = class {
         this.powerHit(x, y, 75, 42, 54, power);
         if (power.age >= 1.42) {
           this.powerHit(x, y, 112, 50, 57, power);
-          this.superEffect(kind, x, y, face2, 0.46);
+          this.superEffect(kind, x, y, face, 0.46);
           game.sound.play("power-crack");
           this.power = null;
         }
@@ -37368,10 +37389,10 @@ function spark(ctx, x, y, length, color2) {
   ctx.lineTo(x - 1, y + 1);
   ctx.fill();
 }
-function ribbon(ctx, x, y, size, face2, color2, tilt) {
+function ribbon(ctx, x, y, size, face, color2, tilt) {
   ctx.save();
   ctx.translate(x, y);
-  ctx.scale(face2, 1);
+  ctx.scale(face, 1);
   ctx.rotate(tilt);
   const tint = ctx.createLinearGradient(-size, 0, size, 0);
   tint.addColorStop(0, "#11233400");
