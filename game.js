@@ -5403,12 +5403,12 @@ var KernelWorkerPool = class {
 // phaser/engine/kernel/src/safe-area.impl.ts
 function safeInsets(canvas, viewport, env, logical) {
   const sx = logical.width / deterministicMath.max(1, canvas.width), sy = logical.height / deterministicMath.max(1, canvas.height);
-  const clamp4 = (n, max) => deterministicMath.max(0, deterministicMath.min(n, max));
+  const clamp5 = (n, max) => deterministicMath.max(0, deterministicMath.min(n, max));
   return {
-    left: clamp4((viewport.left + env.left - canvas.left) * sx, logical.width),
-    right: clamp4((canvas.left + canvas.width - viewport.left - viewport.width + env.right) * sx, logical.width),
-    top: clamp4((viewport.top + env.top - canvas.top) * sy, logical.height),
-    bottom: clamp4((canvas.top + canvas.height - viewport.top - viewport.height + env.bottom) * sy, logical.height)
+    left: clamp5((viewport.left + env.left - canvas.left) * sx, logical.width),
+    right: clamp5((canvas.left + canvas.width - viewport.left - viewport.width + env.right) * sx, logical.width),
+    top: clamp5((viewport.top + env.top - canvas.top) * sy, logical.height),
+    bottom: clamp5((canvas.top + canvas.height - viewport.top - viewport.height + env.bottom) * sy, logical.height)
   };
 }
 
@@ -6054,11 +6054,11 @@ var Game = class {
         const s = this.assets.strip(a.strip);
         frames = Array.from({ length: s.count }, (_, i) => s.first + i);
       }
-      const home = this.dev && frames.length ? this.assets.stripOf(frames[0]) : null;
-      if (home) {
+      const home2 = this.dev && frames.length ? this.assets.stripOf(frames[0]) : null;
+      if (home2) {
         for (const f of frames) {
           const s = this.assets.stripOf(f);
-          if (!s || s.key !== home.key) throw new Error(`spawn ${id2}: anim "${name}" frame ${f} is ${s ? `in strip "${s.key}"` : "not in any strip"} but the anim starts in "${home?.key ?? "?"}" (${home?.count ?? 0} frame${home?.count === 1 ? "" : "s"}). Did addStrip get the frame count? Or use { strip: "${home?.key ?? "name"}", fps }.`);
+          if (!s || s.key !== home2.key) throw new Error(`spawn ${id2}: anim "${name}" frame ${f} is ${s ? `in strip "${s.key}"` : "not in any strip"} but the anim starts in "${home2?.key ?? "?"}" (${home2?.count ?? 0} frame${home2?.count === 1 ? "" : "s"}). Did addStrip get the frame count? Or use { strip: "${home2?.key ?? "name"}", fps }.`);
         }
       }
       out[name] = { ...a, frames };
@@ -11648,8 +11648,8 @@ async function loadFontFaceSourceFont(prepared, config, signal) {
   const workerRasters = prepared.initialRasters.filter(({ operation }) => workerRasterKinds.includes(operation.format.kind)).map(({ operation, descriptor: descriptor2 }) => runtimeBakeRaster(operation.format, descriptor2));
   const selectedRuntimeBake = prepared.runtimeBake ?? config.runtimeBake;
   const runtimeBake = async (request) => {
-    const bake2 = selectedRuntimeBake ?? await loadDefaultRuntimeBake(request.sourceUrl);
-    return bake2({
+    const bake = selectedRuntimeBake ?? await loadDefaultRuntimeBake(request.sourceUrl);
+    return bake({
       ...request,
       ...prepared.unicodeRanges === void 0 ? {} : { unicodeRanges: prepared.unicodeRanges },
       rasters: workerRasters
@@ -33551,220 +33551,8 @@ function bars(options = {}) {
   };
 }
 
-// game/node_modules/@phaser-ae/controls-touch/dist/index.js
-var DISC = 0;
-var RING = 1;
-function bake(size) {
-  if (typeof OffscreenCanvas === "undefined") return null;
-  const c = new OffscreenCanvas(size * 2, size);
-  const g = c.getContext("2d");
-  if (!g) return c;
-  const r = size / 2 - 2;
-  g.fillStyle = "#ffffff";
-  g.beginPath();
-  g.arc(size / 2, size / 2, r, 0, deterministicMath.PI * 2);
-  g.fill();
-  g.strokeStyle = "#ffffff";
-  g.lineWidth = deterministicMath.max(2, size * 0.06);
-  g.beginPath();
-  g.arc(size + size / 2, size / 2, r - g.lineWidth / 2, 0, deterministicMath.PI * 2);
-  g.stroke();
-  return c;
-}
-function controlsTouch(opts = {}) {
-  return {
-    id: "controls-touch",
-    requires: ["world:screen", "typography"],
-    attach(k) {
-      const assets = k.assets;
-      const SIZE = 128;
-      const FIRST = assets.addStrip("touch-controls", bake(SIZE), SIZE, SIZE, 2);
-      const layers = k.roster.layers;
-      const layer = opts.layer ?? layers.find((l) => l === "hud") ?? layers[layers.length - 1];
-      const alpha = opts.alpha ?? 0.35;
-      const touchDevice = k.input.touchDevice;
-      let visible = opts.touchOnly === false ? true : touchDevice;
-      const buttons = [];
-      const held = /* @__PURE__ */ new Set();
-      const stickVec = { x: 0, y: 0 };
-      let ring = null, thumb = null, stickPtr = null;
-      const S = opts.stick;
-      const press = (code, down) => {
-        if (!code) return;
-        if (down === held.has(code)) return;
-        if (down) held.add(code);
-        else held.delete(code);
-        k.input.press(code, down);
-      };
-      const at = (anchor, x, y) => {
-        const W = k.screen.width, H = k.screen.height;
-        const safe = k.screen.safe ?? { top: 0, right: 0, bottom: 0, left: 0 };
-        return { x: anchor.endsWith("right") ? W - safe.right - x : safe.left + x, y: anchor.startsWith("bottom") ? H - safe.bottom - y : safe.top + y };
-      };
-      const typography3 = k.registry.get("typography", "typography");
-      let fontsReady = false;
-      k.hooks.on("boot.domReady", async () => {
-        fontsReady = true;
-        place();
-        await typography3.prepare();
-      });
-      const addButton = (spec) => {
-        const r = spec.r ?? 34;
-        const h = k.roster.spawn({ id: "touch-button", owner: "controls-touch", tags: ["touch-control"], layer, x: 0, y: 0, width: r * 2, height: r * 2, frame: FIRST + DISC, tint: spec.tint ?? "#ffffff", alpha, visible });
-        buttons.push({ spec, h, down: false, ptr: null, label: null });
-        place();
-      };
-      const prune = () => {
-        for (let i = buttons.length - 1; i >= 0; i--) {
-          const b = buttons[i];
-          if (b.h.alive) continue;
-          press(b.spec.code, false);
-          if (b.label?.alive) b.label.kill();
-          buttons.splice(i, 1);
-        }
-      };
-      const relabel = (b) => {
-        if (!b.spec.label || !fontsReady || b.label?.alive) return;
-        b.label = typography3.label({ x: 0, y: 0, text: b.spec.label, align: "center", layer });
-      };
-      const place = () => {
-        prune();
-        for (const b of buttons) {
-          relabel(b);
-          const r = b.spec.r ?? 34, p = at(b.spec.anchor ?? "bottom-right", b.spec.x ?? 70, b.spec.y ?? 70);
-          b.h.x = p.x;
-          b.h.y = p.y;
-          b.h.width = r * 2;
-          b.h.height = r * 2;
-          b.h.visible = visible;
-          b.h.alpha = alpha * (b.down ? 2.2 : 1);
-          if (b.label) {
-            b.label.x = p.x;
-            b.label.y = p.y - 7;
-            b.label.visible = visible;
-          }
-          b.h.snap();
-        }
-        if (S && ring && thumb) {
-          const r = S.r ?? 50, p = at(S.anchor ?? "bottom-left", S.x ?? 70, S.y ?? 70);
-          ring.x = p.x;
-          ring.y = p.y;
-          ring.width = r * 2;
-          ring.height = r * 2;
-          ring.visible = visible;
-          thumb.x = p.x + stickVec.x * r * 0.6;
-          thumb.y = p.y + stickVec.y * r * 0.6;
-          thumb.width = r * 0.8;
-          thumb.height = r * 0.8;
-          thumb.visible = visible;
-          ring.snap();
-          thumb.snap();
-        }
-      };
-      if (S) {
-        ring = k.roster.spawn({ id: "touch-stick", owner: "controls-touch", tags: ["touch-control"], layer, x: 0, y: 0, width: 1, height: 1, frame: FIRST + RING, tint: S.tint ?? "#ffffff", alpha, visible });
-        thumb = k.roster.spawn({ id: "touch-thumb", owner: "controls-touch", tags: ["touch-control"], layer, x: 0, y: 0, width: 1, height: 1, frame: FIRST + DISC, tint: S.tint ?? "#ffffff", alpha, visible });
-      }
-      for (const b of opts.buttons ?? []) addButton(b);
-      place();
-      k.hooks.on("app.resize", () => place());
-      k.simulate.add("controls-touch", {}, () => {
-        if (!visible) return;
-        if (buttons.some((b) => !b.h.alive || fontsReady && b.spec.label && !b.label?.alive)) place();
-        const ptrs = k.input.gameplay.pointers;
-        for (const b of buttons) {
-          const r = b.spec.r ?? 34;
-          if (b.ptr !== null) {
-            const p = ptrs.find((q) => q.id === b.ptr);
-            if (!p || !p.down) {
-              b.ptr = null;
-              b.down = false;
-              press(b.spec.code, false);
-            }
-            continue;
-          }
-          for (const p of ptrs) {
-            if (!p.pressed || stickPtr === p.id) continue;
-            const dx = p.x - b.h.x, dy = p.y - b.h.y;
-            if (dx * dx + dy * dy <= r * r) {
-              b.ptr = p.id;
-              b.down = true;
-              press(b.spec.code, true);
-              break;
-            }
-          }
-        }
-        if (S && ring) {
-          const r = S.r ?? 50, dz = S.deadzone ?? 0.35;
-          if (stickPtr !== null) {
-            const p = ptrs.find((q) => q.id === stickPtr);
-            if (!p || !p.down) {
-              stickPtr = null;
-              stickVec.x = 0;
-              stickVec.y = 0;
-            } else {
-              const dx = (p.x - ring.x) / r, dy = (p.y - ring.y) / r;
-              const len = deterministicMath.hypot(dx, dy) || 1, s = deterministicMath.min(1, len) / len;
-              stickVec.x = dx * s;
-              stickVec.y = dy * s;
-            }
-          } else {
-            for (const p of ptrs) {
-              if (!p.pressed) continue;
-              const dx = p.x - ring.x, dy = p.y - ring.y;
-              if (dx * dx + dy * dy <= r * r * 1.44) {
-                stickPtr = p.id;
-                stickVec.x = dx / r;
-                stickVec.y = dy / r;
-                break;
-              }
-            }
-          }
-          press(S.codes.left, stickVec.x < -dz);
-          press(S.codes.right, stickVec.x > dz);
-          press(S.codes.up, stickVec.y < -dz);
-          press(S.codes.down, stickVec.y > dz);
-        }
-        place();
-      });
-      k.own(() => {
-        for (const c of held) k.input.press(c, false);
-        held.clear();
-      });
-      return { touch: {
-        get visible() {
-          return visible;
-        },
-        set visible(v) {
-          if (v === visible) return;
-          visible = v;
-          if (!v) {
-            for (const c of [...held]) press(c, false);
-            stickVec.x = 0;
-            stickVec.y = 0;
-            stickPtr = null;
-            for (const b of buttons) {
-              b.ptr = null;
-              b.down = false;
-            }
-          }
-          place();
-        },
-        get stick() {
-          return { x: stickVec.x, y: stickVec.y };
-        },
-        get held() {
-          return [...held];
-        },
-        button: addButton,
-        touchDevice
-      } };
-    }
-  };
-}
-
 // game/engine.ts
-var composed = createGame({ "width": 640, "height": 360, "fit": "height", "background": "#000000", "pixelArt": true, "backgroundPolicy": "pause", "seed": 68148 }).use(renderer()).use(side()).use(screen2()).use(controls2d()).use(maths()).use(color()).use(typography2()).use(audio()).use(tween()).use(save({ "namespace": "pizza-fish-taco-and-friends" })).use(renderTexture()).use(feel()).use(bars()).use(controlsTouch({ "alpha": 0.66, "stick": { "anchor": "bottom-left", "x": 68, "y": 65, "r": 44, "deadzone": 0.23, "tint": "#9deeda", "codes": { "left": "Touch:left", "right": "Touch:right", "up": "Touch:up", "down": "Touch:down" } } }));
+var composed = createGame({ "width": 640, "height": 360, "fit": "height", "background": "#000000", "pixelArt": true, "backgroundPolicy": "pause", "seed": 68148 }).use(renderer()).use(side()).use(screen2()).use(controls2d()).use(maths()).use(color()).use(typography2()).use(audio()).use(tween()).use(save({ "namespace": "pizza-fish-taco-and-friends" })).use(renderTexture()).use(feel()).use(bars());
 var game = composed.game;
 var signals = composed.signals;
 
@@ -35450,6 +35238,108 @@ var TouchButtons = class {
   }
 };
 
+// game/touch-stick.ts
+var STICK_RADIUS = 44;
+var PICKUP_RADIUS = STICK_RADIUS * 1.2;
+var THUMB_TRAVEL = STICK_RADIUS * 0.6;
+var DEAD_ZONE = STICK_RADIUS * 0.23;
+var MAX_BASE_X = 14;
+var MAX_BASE_Y = 18;
+var RING_ALPHA = 0.66;
+var home = () => {
+  const safe = game.kernel.opts.safe;
+  return { x: (safe?.left ?? 0) + 68, y: game.screen.height - (safe?.bottom ?? 0) - 65 };
+};
+var clamp2 = (value, limit) => deterministicMath.max(-limit, deterministicMath.min(limit, value));
+function createTouchStick() {
+  const size = 96;
+  game.paint("movement-stick", size, size, (ctx, frame) => {
+    ctx.fillStyle = ctx.strokeStyle = "#9deeda";
+    ctx.beginPath();
+    ctx.arc(size / 2, size / 2, frame === 0 ? 45 : 46, 0, deterministicMath.PI * 2);
+    if (frame === 0) {
+      ctx.lineWidth = 6;
+      ctx.stroke();
+    } else {
+      ctx.fill();
+    }
+  }, { frames: 2 });
+  const ring = game.spawn({
+    id: "touch-stick",
+    texture: "movement-stick",
+    frame: 0,
+    layer: "hud",
+    width: STICK_RADIUS * 2,
+    height: STICK_RADIUS * 2,
+    visible: false,
+    alpha: RING_ALPHA
+  });
+  const thumb = game.spawn({
+    id: "touch-thumb",
+    texture: "movement-stick",
+    frame: 1,
+    layer: "hud",
+    width: STICK_RADIUS * 0.8,
+    height: STICK_RADIUS * 0.8,
+    visible: false,
+    alpha: RING_ALPHA
+  });
+  let enabled = false;
+  let drag = null;
+  const offset = { x: 0, y: 0 };
+  let held = { left: false, right: false, up: false, down: false };
+  function steer(dx, dy) {
+    const next = { left: dx < -DEAD_ZONE, right: dx > DEAD_ZONE, up: dy < -DEAD_ZONE, down: dy > DEAD_ZONE };
+    for (const direction2 of ["left", "right", "up", "down"]) {
+      if (next[direction2] !== held[direction2]) game.input.press("Touch:" + direction2, next[direction2]);
+    }
+    held = next;
+  }
+  function release2() {
+    drag = null;
+    steer(0, 0);
+  }
+  game.kernel.input.consume("ui", { pointer(event) {
+    if (drag && event.id === drag.id) {
+      if (event.type === "up" || event.type === "cancel") release2();
+      if (event.type === "move" && drag) {
+        drag.current = { x: event.x, y: event.y };
+        steer(event.x - drag.origin.x, event.y - drag.origin.y);
+      }
+      event.claim();
+      return;
+    }
+    if (drag || !enabled || game.scenes.current !== "play" || game.input.ignoring || event.type !== "down" || event.kind !== "touch" && event.kind !== "pen") return;
+    const center = home();
+    if (deterministicMath.hypot(event.x - center.x - offset.x, event.y - center.y - offset.y) > PICKUP_RADIUS) return;
+    const point = { x: event.x, y: event.y };
+    drag = { id: event.id, origin: point, current: point };
+    event.claim();
+  } });
+  game.kernel.hooks.on("app.resize", release2);
+  return (dt, visible) => {
+    if (enabled && !visible) {
+      release2();
+      offset.x = offset.y = 0;
+    }
+    enabled = ring.visible = thumb.visible = visible;
+    if (!visible) return;
+    const center = home();
+    const dx = drag ? drag.current.x - drag.origin.x : 0;
+    const dy = drag ? drag.current.y - drag.origin.y : 0;
+    const targetX = drag ? clamp2((drag.origin.x - center.x) * 0.65 + dx * 0.28, MAX_BASE_X) : 0;
+    const targetY = drag ? clamp2((drag.origin.y - center.y) * 0.65 + dy * 0.4, MAX_BASE_Y) : 0;
+    const ease2 = 1 - deterministicMath.exp(-24 * dt);
+    offset.x += (targetX - offset.x) * ease2;
+    offset.y += (targetY - offset.y) * ease2;
+    ring.x = center.x + offset.x;
+    ring.y = center.y + offset.y;
+    const reach = THUMB_TRAVEL / deterministicMath.max(STICK_RADIUS, deterministicMath.hypot(dx, dy));
+    thumb.x = ring.x + dx * reach;
+    thumb.y = ring.y + dy * reach;
+  };
+}
+
 // game/input.ts
 var portrait = typeof matchMedia === "function" ? matchMedia("(orientation: portrait)") : null;
 function touchMode() {
@@ -35477,13 +35367,14 @@ function configureInput() {
   game.controls.bind("mute", { keys: ["KeyM"], pad: ["back"] });
   game.controls.bind("accept", { keys: ["Enter", "Space"], pad: ["a"] });
   game.controls.bind("back", { keys: ["Escape"], pad: ["b"] });
-  game.touch.visible = false;
+  const updateTouchStick = createTouchStick();
   listenForTouchActions();
-  game.step("touch-screen-mode", () => {
+  game.step("touch-screen-mode", (dt) => {
     const playing = game.scenes.current === "play";
     const rotate = phoneNeedsRotation();
-    game.touch.visible = playing && touchMode() && !rotate;
-    showTouchActions(game.touch.visible);
+    const visible = playing && touchMode() && !rotate;
+    updateTouchStick(dt, visible);
+    showTouchActions(visible);
     if (playing && rotate) game.scenes.push("rotate");
     else if (game.scenes.current === "rotate" && !rotate) game.scenes.pop();
   });
@@ -35546,7 +35437,7 @@ var RIGS = { ...TACO_LEG_RIG, ...ROSTER_LEG_RIGS };
 var FIGHTER_SCALE = 104 / 192;
 var FIGHTER_ORIGIN = 56 * FIGHTER_SCALE;
 var TAU4 = 2 * deterministicMath.PI;
-var clamp2 = (n, low, high) => deterministicMath.max(low, deterministicMath.min(high, n));
+var clamp3 = (n, low, high) => deterministicMath.max(low, deterministicMath.min(high, n));
 var mix = (a, b, t) => a + (b - a) * t;
 var smooth = (t) => t * t * (3 - 2 * t);
 var phaseOf = (phase, side2) => (phase + (side2 === 0 ? 0.5 : 0)) % 1;
@@ -35636,7 +35527,7 @@ var FighterFootwork = class {
         this.touchdown = foot.at;
       }
       if (progress < stance) {
-        foot.angle = 0.28 * smooth(clamp2((progress / stance - 0.56) / 0.44, 0, 1));
+        foot.angle = 0.28 * smooth(clamp3((progress / stance - 0.56) / 0.44, 0, 1));
         foot.lift = 0;
         return;
       }
@@ -35645,7 +35536,7 @@ var FighterFootwork = class {
         foot.swingStart = stance;
         foot.planted = false;
       }
-      const t = clamp2((progress - foot.swingStart) / (1 - foot.swingStart), 0, 1);
+      const t = clamp3((progress - foot.swingStart) / (1 - foot.swingStart), 0, 1);
       const ahead = (1 - progress) * stride + lead;
       const destination = this.neutral(x + heading.x * ahead, y + heading.y * ahead, side2);
       const lift = deterministicMath.sin(deterministicMath.PI * t);
@@ -35663,7 +35554,7 @@ var FighterFootwork = class {
       const from = this.settling[side2];
       const to = this.neutral(x, y, side2);
       const progress = age / duration;
-      const t = clamp2(from.planted ? (progress - 0.43) / 0.57 : progress / 0.76, 0, 1);
+      const t = clamp3(from.planted ? (progress - 0.43) / 0.57 : progress / 0.76, 0, 1);
       foot.at = { x: mix(from.at.x, to.x, smooth(t)), y: mix(from.at.y, to.y, smooth(t)) };
       foot.lift = from.lift * (1 - t) + deterministicMath.sin(deterministicMath.PI * t) * (from.planted ? 1.6 : 1);
       foot.angle = from.angle * (1 - t);
@@ -35692,11 +35583,11 @@ var FighterFootwork = class {
       const dx = ankles[i][0] - leg.hip[0], reach = leg.maxLength * 0.84;
       return [{ min: dx - reach, max: dx + reach }];
     });
-    const pelvisX = clamp2(0, deterministicMath.max(...bounds.map((b) => b.min)), deterministicMath.min(...bounds.map((b) => b.max)));
+    const pelvisX = clamp3(0, deterministicMath.max(...bounds.map((b) => b.min)), deterministicMath.min(...bounds.map((b) => b.max)));
     this.legs.forEach((leg, i) => {
       if (this.feet[i].planted) return;
       const ankle = ankles[i], hipX = leg.hip[0] + pelvisX, reach = leg.maxLength * 0.8;
-      const next = clamp2(ankle[0], hipX - reach, hipX + reach);
+      const next = clamp3(ankle[0], hipX - reach, hipX + reach);
       this.feet[i].at.x += (next - ankle[0]) * FIGHTER_SCALE * facing;
       ankle[0] = next;
     });
@@ -35715,7 +35606,7 @@ var FighterFootwork = class {
         const sideways = deterministicMath.pow(ankle[0] - hip[0], 2);
         const reach = deterministicMath.sqrt(deterministicMath.max(0, deterministicMath.pow(leg.maxLength, 2) - sideways));
         const kneeRoom = deterministicMath.sqrt(deterministicMath.max(0, deterministicMath.pow(leg.maxLength * 0.42, 2) - sideways));
-        const next = clamp2(ankle[1], hip[1] + kneeRoom, hip[1] + reach);
+        const next = clamp3(ankle[1], hip[1] + kneeRoom, hip[1] + reach);
         const delta = (next - ankle[1]) * FIGHTER_SCALE, lift = foot.lift;
         foot.lift = deterministicMath.max(0, lift - delta);
         foot.at.y += delta + foot.lift - lift;
@@ -35792,7 +35683,7 @@ function timeAttacks(fighter) {
 }
 var BUFFER = { dodge: 0.16, jump: 0.19, charge: 0.15, melee: 0.26, shoot: 0.14 };
 var ACTIONS = Object.keys(BUFFER);
-var clamp3 = (n, min, max) => deterministicMath.max(min, deterministicMath.min(max, n));
+var clamp4 = (n, min, max) => deterministicMath.max(min, deterministicMath.min(max, n));
 var Hero = class {
   constructor(fighter = DEFAULT_FIGHTER) {
     this.fighter = fighter;
@@ -35851,7 +35742,7 @@ var Hero = class {
       this.airTime = 0;
     }
     if (motion.travel) {
-      const elapsed = (time) => clamp3((time - motion.release) / motion.travel, 0, 1);
+      const elapsed = (time) => clamp4((time - motion.release) / motion.travel, 0, 1);
       this.x += this.facing * motion.distance * (elapsed(this.age) - elapsed(prior));
     } else this.steer(axis2, dt, 0.23);
     if (this.age >= motion.duration) this.act(axis2, 0);
@@ -35901,8 +35792,8 @@ var Hero = class {
       if (this.pose === "shoot") this.steer(axis2, dt, 0.78);
       else if (this.airborne) this.steer(axis2, dt, 0.65);
       else if (prior < move.windup) this.x += this.facing * move.lunge * deterministicMath.min(dt, move.windup - prior) / move.windup;
-      this.x = clamp3(this.x, minX, maxX);
-      this.y = clamp3(this.y, STREET_TOP, STREET_BOTTOM);
+      this.x = clamp4(this.x, minX, maxX);
+      this.y = clamp4(this.y, STREET_TOP, STREET_BOTTOM);
       if (prior < move.windup && this.age >= move.windup) strike(this.pose, move);
       if (this.pose !== "victory") {
         if (!this.airborne && this.age >= move.windup + 0.033 && this.take("dodge")) this.roll(axis2, dt);
@@ -35929,8 +35820,8 @@ var Hero = class {
         this.comboWindow = 0;
       } else this.steer(axis2, dt, 0.36);
     } else if (acceptsInput) this.act(axis2, dt);
-    this.x = clamp3(this.x, minX, maxX);
-    this.y = clamp3(this.y, STREET_TOP, STREET_BOTTOM);
+    this.x = clamp4(this.x, minX, maxX);
+    this.y = clamp4(this.y, STREET_TOP, STREET_BOTTOM);
     const dx = this.x - oldX, dy = this.y - oldY;
     if (this.pose === "run") {
       if (deterministicMath.hypot(dx, dy) > 1e-3) this.footwork.run(this.x, this.y, dx, dy, this.facing);
@@ -35987,7 +35878,7 @@ var Hero = class {
       const dx = target.x - this.x;
       if (deterministicMath.abs(dx) >= 4) this.facing = deterministicMath.sign(dx);
       const lane = target.y - this.y;
-      this.y += clamp3(lane * 0.28, -8, 8);
+      this.y += clamp4(lane * 0.28, -8, 8);
     }
     this.setPose(move);
   }
@@ -36172,8 +36063,8 @@ var Foe = class {
         }
       }
     }
-    this.x = clamp3(this.x, left, right);
-    this.y = clamp3(this.y, STREET_TOP, STREET_BOTTOM);
+    this.x = clamp4(this.x, left, right);
+    this.y = clamp4(this.y, STREET_TOP, STREET_BOTTOM);
     if (moving) this.strideTime += dt;
     this.draw(moving);
   }
@@ -36561,7 +36452,7 @@ var Combat = class {
         break;
       case "flame":
         if (power.marks < 5 && age >= power.marks * 0.061) {
-          const at = clamp3(x - 13 * face, this.left, this.right);
+          const at = clamp4(x - 13 * face, this.left, this.right);
           this.zones.push({
             x: at,
             y,
@@ -36581,8 +36472,8 @@ var Combat = class {
       case "syrup":
         if (!first) break;
         for (const [i, lane] of [-27, 0, 27].entries()) {
-          const at = clamp3(x + face * (49 + i * 46), this.left, this.right);
-          const row = clamp3(y + lane, STREET_TOP, STREET_BOTTOM);
+          const at = clamp4(x + face * (49 + i * 46), this.left, this.right);
+          const row = clamp4(y + lane, STREET_TOP, STREET_BOTTOM);
           const delay = 0.19 + i * 0.1;
           this.zones.push({
             x: at,
@@ -36698,7 +36589,7 @@ var Combat = class {
       }
       if (shot.life <= 0 || shot.x < this.left || shot.x > this.right) {
         this.zones.push({
-          x: clamp3(shot.x, this.left, this.right),
+          x: clamp4(shot.x, this.left, this.right),
           y: shot.y,
           rx: 29,
           ry: 12,
@@ -36922,8 +36813,8 @@ var Oven = class {
       this.direction = dx < 0 ? -1 : 1;
       if (this.mode === "prowl") {
         if (deterministicMath.abs(dx) > 105) this.x += this.direction * dt * (this.phase === 1 ? 48 : 65);
-        this.y += clamp3(hero.y - this.y, -38 * dt, 38 * dt);
-        this.x = clamp3(this.x, this.home - 235, this.home + 258);
+        this.y += clamp4(hero.y - this.y, -38 * dt, 38 * dt);
+        this.x = clamp4(this.x, this.home - 235, this.home + 258);
       }
       if (this.timer <= 0) {
         this.mode = this.cycles % 2 === 0 ? "fire" : "slam";
@@ -37082,7 +36973,7 @@ var DistrictBoss = class {
     const hard = this.phase === 2;
     const damage = (this.id === "doom-burger" ? 19 : 14) + (hard ? 4 : 0);
     const { color: color2 } = this.hpProfile;
-    const aimX = clamp3(hero.x, this.home - 365, this.home + 405);
+    const aimX = clamp4(hero.x, this.home - 365, this.home + 405);
     const spot = (x, y, rx, ry2, linger) => ({ x, y, rx, ry: ry2, shape: "circle", color: color2, damage, height: 27, effect: "burst", linger });
     const lane = (x, y, rx, ry2, effect = "ring") => ({ x, y, rx, ry: ry2, shape: "band", color: color2, damage, height: 24, effect });
     const d = this.face;
@@ -37095,14 +36986,14 @@ var DistrictBoss = class {
         break;
       case "anchor":
       case "rush":
-        this.dashX = clamp3(this.x + d * (hard ? 230 : 186), this.home - 250, this.home + 250);
+        this.dashX = clamp4(this.x + d * (hard ? 230 : 186), this.home - 250, this.home + 250);
         this.warnings = [lane((this.x + this.dashX) / 2, this.y, deterministicMath.abs(this.dashX - this.x) / 2 + 47, 24)];
         break;
       case "tentacles":
         this.warnings = [spot(this.x + d * 45, this.y, 104, 38, hard ? 1.8 : void 0)];
         break;
       case "sprinkles": {
-        const center = clamp3(hero.y, STREET_TOP + 21, STREET_BOTTOM - 21);
+        const center = clamp4(hero.y, STREET_TOP + 21, STREET_BOTTOM - 21);
         this.warnings = [
           lane(this.x + d * 145, center - 19, 168, 10, "burst"),
           lane(this.x + d * 145, center + 19, 168, 10, "burst")
@@ -37134,8 +37025,8 @@ var DistrictBoss = class {
       this.face = hero.x < this.x ? -1 : 1;
       if (this.mode === "prowl") {
         const pace = this.hpProfile.speed * (this.phase === 2 ? 1.27 : 1) * dt;
-        if (deterministicMath.abs(hero.x - this.x) > 87) this.x = clamp3(this.x + this.face * pace, this.home - 240, this.home + 246);
-        this.y += clamp3(hero.y - this.y, -pace * 0.53, pace * 0.53);
+        if (deterministicMath.abs(hero.x - this.x) > 87) this.x = clamp4(this.x + this.face * pace, this.home - 240, this.home + 246);
+        this.y += clamp4(hero.y - this.y, -pace * 0.53, pace * 0.53);
       }
       if (this.timer <= 0) this.cue(hero);
     } else if (this.mode === "windup" && this.timer <= 0) {
@@ -37190,7 +37081,7 @@ var DistrictBoss = class {
     this.sprite.sx = this.face;
     this.sprite.z = deterministicMath.round(this.y) * 2;
     this.sprite.tint = this.flash > 0 ? "#fff2cd" : this.vulnerable ? "#bfffcc" : "#ffffff";
-    this.sprite.alpha = dying ? clamp3(this.timer, 0, 1) : 1;
+    this.sprite.alpha = dying ? clamp4(this.timer, 0, 1) : 1;
     this.shadow.x = this.sprite.x;
     this.shadow.y = deterministicMath.round(this.y);
     this.shadow.alpha = this.sprite.alpha;
@@ -37602,7 +37493,7 @@ function drawSupers(ctx, combat, scroll) {
 }
 
 // game/stage-art.ts
-var clampAlpha = (alpha) => clamp3(alpha, 0, 1);
+var clampAlpha = (alpha) => clamp4(alpha, 0, 1);
 var StageArt = class {
   constructor(stage, fighter, phone) {
     this.stage = stage;
@@ -37711,7 +37602,7 @@ var StageArt = class {
     const width = STAGES[this.stage].width;
     const zoom = game.camera.zoom;
     const half = game.screen.width / (2 * zoom);
-    const center = half * 2 >= width ? width / 2 : clamp3(h.x + 89, half, width - half);
+    const center = half * 2 >= width ? width / 2 : clamp4(h.x + 89, half, width - half);
     game.camera.x += (center - game.camera.x) * deterministicMath.min(1, dt * 9.5);
     game.camera.y = this.cameraY(zoom);
     const scroll = game.camera.x - half;
@@ -38343,7 +38234,7 @@ function continueRun() {
 }
 function newRun(index = 0, opening = true, fighter = runFighter) {
   resetTouchStickers();
-  stageIndex = clamp3(deterministicMath.floor(index), 0, STAGES.length - 1);
+  stageIndex = clamp4(deterministicMath.floor(index), 0, STAGES.length - 1);
   active = null;
   cleared = [];
   persistentRun = index === 0;
