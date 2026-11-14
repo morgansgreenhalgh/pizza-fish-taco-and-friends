@@ -34726,6 +34726,7 @@ var SPRITES = [
   "heading-over",
   "heading-saved",
   "heading-credits",
+  "snack-city-map",
   ...Array.from(new Set(STAGES.map((level, stage) => level.art ?? stage))).flatMap((stage) => ["panorama-" + stage, ...[0, 1, 2].map((panel) => "deck-" + stage + "-" + panel)])
 ];
 async function loadLocalArt() {
@@ -35363,17 +35364,17 @@ function layout() {
     { action: "music", x: utilityCenter + UTILITY_SPACING / 2, y: bottom - 39, r: UTILITY_RADIUS }
   ];
 }
-function combatHitRadius(button) {
-  return deterministicMath.max(24, button.r + 2);
+function combatHitRadius(button2) {
+  return deterministicMath.max(24, button2.r + 2);
 }
-function hitDistance(button, x, y) {
-  const dx = x - button.x;
-  const dy = y - button.y;
-  if (!isCombatTouchAction(button.action))
-    return deterministicMath.max(deterministicMath.abs(dx) / (button.r + UTILITY_HIT_PADDING), deterministicMath.abs(dy) / 21);
-  if (button.action === "shoot" || button.action === "assist") return deterministicMath.hypot(dx / 24, dy / 21);
-  if (button.action === "special") return deterministicMath.hypot(dx / 22, dy / 21);
-  return deterministicMath.hypot(dx, dy) / combatHitRadius(button);
+function hitDistance(button2, x, y) {
+  const dx = x - button2.x;
+  const dy = y - button2.y;
+  if (!isCombatTouchAction(button2.action))
+    return deterministicMath.max(deterministicMath.abs(dx) / (button2.r + UTILITY_HIT_PADDING), deterministicMath.abs(dy) / 21);
+  if (button2.action === "shoot" || button2.action === "assist") return deterministicMath.hypot(dx / 24, dy / 21);
+  if (button2.action === "special") return deterministicMath.hypot(dx / 22, dy / 21);
+  return deterministicMath.hypot(dx, dy) / combatHitRadius(button2);
 }
 function release(id2, canceled) {
   const action = activePointers.get(id2);
@@ -35408,10 +35409,10 @@ function listenForTouchActions() {
     if (!showing || game.scenes.current !== "play" || game.input.ignoring || event.type !== "down" || event.kind !== "touch" && event.kind !== "pen") return;
     let nearest;
     let score = Infinity;
-    for (const button of layout()) {
-      const distance3 = hitDistance(button, event.x, event.y);
+    for (const button2 of layout()) {
+      const distance3 = hitDistance(button2, event.x, event.y);
       if (distance3 <= 1 && distance3 < score) {
-        nearest = button;
+        nearest = button2;
         score = distance3;
       }
     }
@@ -35487,7 +35488,7 @@ var TouchButtons = class {
       ring.alpha = opacityAt(ring.x, ring.y, ring.width * 0.32) * 0.66;
       if (thumb) thumb.alpha = opacityAt(thumb.x, thumb.y, thumb.width / 2) * 0.66;
     }
-    const buttons = layout().map((button) => ({ ...button, opacity: opacityAt(button.x, button.y, button.r) }));
+    const buttons = layout().map((button2) => ({ ...button2, opacity: opacityAt(button2.x, button2.y, button2.r) }));
     const held = new Set(activePointers.values());
     const attack = buttons[0];
     const punching = held.has("melee");
@@ -35503,11 +35504,11 @@ var TouchButtons = class {
     this.portrait.x = deterministicMath.round(attack.x);
     this.portrait.y = deterministicMath.round(attack.y) + (punching ? 1 : -1);
     this.portrait.alpha = attack.opacity;
-    const stickers = buttons.flatMap((button) => {
-      if (!isCombatTouchAction(button.action)) return [];
-      const wear = stickerWear.get(button.action);
+    const stickers = buttons.flatMap((button2) => {
+      if (!isCombatTouchAction(button2.action)) return [];
+      const wear = stickerWear.get(button2.action);
       const fall = wear?.falling == null ? 0 : (stickerTime - wear.falling) / LABEL_FALL_TIME;
-      return fall < 1 ? [{ ...button, action: button.action, wear: (wear?.uses ?? 0) / pressesBeforePeel(button.action), fall: deterministicMath.floor(fall * 36) / 36 }] : [];
+      return fall < 1 ? [{ ...button2, action: button2.action, wear: (wear?.uses ?? 0) / pressesBeforePeel(button2.action), fall: deterministicMath.floor(fall * 36) / 36 }] : [];
     });
     const signature = JSON.stringify([
       buttons.map((b) => [b.x, b.y, b.r, b.opacity]),
@@ -35519,20 +35520,20 @@ var TouchButtons = class {
     if (signature !== this.previous) {
       this.previous = signature;
       surface.clear().draw((ctx) => {
-        for (const button of buttons) {
-          const progress = button.action === "special" ? meter / 100 : button.action === "charge" ? charge : 0;
-          const size = button.action === "melee" ? 61 : isCombatTouchAction(button.action) ? button.r * 2 - 4 : 40;
-          ctx.globalAlpha = button.opacity;
+        for (const button2 of buttons) {
+          const progress = button2.action === "special" ? meter / 100 : button2.action === "charge" ? charge : 0;
+          const size = button2.action === "melee" ? 61 : isCombatTouchAction(button2.action) ? button2.r * 2 - 4 : 40;
+          ctx.globalAlpha = button2.opacity;
           drawTouchGlyph(
             ctx,
-            button.action,
-            button.x,
-            button.y,
+            button2.action,
+            button2.x,
+            button2.y,
             size,
-            held.has(button.action),
+            held.has(button2.action),
             progress,
             music,
-            button.action === "melee"
+            button2.action === "melee"
           );
         }
         ctx.globalAlpha = 1;
@@ -38916,15 +38917,127 @@ function addDebugControls() {
 // game/scenes/WorldMap.ts
 var BONUS = CHAPTERS.length;
 var FINISH = BONUS + 1;
-var nodeWidth = 146;
-var nodeHeight = 43;
-var nodes2 = [
-  { x: 27, y: 101, name: "SNACK CITY", color: CHAPTERS[0].color },
-  { x: 247, y: 67, name: "SIZZLE DOCKS", color: CHAPTERS[1].color },
-  { x: 247, y: 135, name: "SUGAR CARNIVAL", color: CHAPTERS[2].color },
-  { x: 467, y: 67, name: "BLACKOUT GRID", color: CHAPTERS[3].color },
-  { x: 467, y: 135, name: "AFTER HOURS", color: "#ff9867" }
+var GRID = CHAPTERS.length - 1;
+var MAP_TOP = 43;
+var MAP_BOTTOM = 260;
+var ACTION_X = 548;
+var TILE_X = 22;
+var TILE_GAP = 145;
+var TITLE_BOUNDS = { left: 568, right: 622, top: 220, bottom: 254 };
+var DIM = "#837b9b";
+var INK2 = "#100c24";
+var ORANGE = "#ffad70";
+var landmarks = [
+  { name: "SNACK CITY", color: CHAPTERS[0].color, point: [95, 135] },
+  { name: "SIZZLE DOCKS", color: CHAPTERS[1].color, point: [286, 95] },
+  { name: "SUGAR CARNIVAL", color: CHAPTERS[2].color, point: [290, 188] },
+  { name: "BLACKOUT GRID", color: CHAPTERS[3].color, point: [519, 89] },
+  { name: "AFTER HOURS", color: ORANGE, point: [538, 180] }
 ];
+var routes2 = [
+  { from: 0, to: 1, turns: [[151, 135], [192, 111], [244, 111]] },
+  { from: 0, to: 2, turns: [[155, 153], [177, 177], [228, 188]] },
+  { from: 1, to: GRID, turns: [[337, 98], [387, 117], [444, 117]] },
+  { from: 2, to: GRID, turns: [[340, 172], [389, 147], [423, 147], [462, 121]] },
+  { from: GRID, to: BONUS, turns: [[554, 113], [563, 136], [563, 151]] }
+];
+function plate(ctx, x, y, width, height, cut) {
+  ctx.beginPath();
+  ctx.moveTo(x + cut, y);
+  ctx.lineTo(x + width, y);
+  ctx.lineTo(x + width, y + height - cut);
+  ctx.lineTo(x + width - cut, y + height);
+  ctx.lineTo(x, y + height);
+  ctx.lineTo(x, y + cut);
+  ctx.closePath();
+}
+function diamond(ctx, x, y, r) {
+  ctx.beginPath();
+  ctx.moveTo(x, y - r);
+  ctx.lineTo(x + r, y);
+  ctx.lineTo(x, y + r);
+  ctx.lineTo(x - r, y);
+  ctx.closePath();
+}
+function drawRoutes(ctx, progress) {
+  ctx.lineJoin = "round";
+  for (const route of routes2) {
+    const from = landmarks[route.from].point;
+    const to = landmarks[route.to];
+    const open = progress.cleared.includes(route.from);
+    ctx.beginPath();
+    ctx.moveTo(from[0], from[1]);
+    for (const [x, y] of route.turns) ctx.lineTo(x, y);
+    ctx.lineTo(to.point[0], to.point[1]);
+    ctx.setLineDash(open ? [] : [4, 5]);
+    ctx.strokeStyle = "#100b22df";
+    ctx.lineWidth = open ? 7 : 4;
+    ctx.stroke();
+    if (open) {
+      ctx.strokeStyle = to.color + "63";
+      ctx.lineWidth = 5;
+      ctx.stroke();
+    }
+    ctx.strokeStyle = open ? to.color : "#b19ab7b0";
+    ctx.lineWidth = open ? 1.75 : 1.25;
+    ctx.stroke();
+  }
+  ctx.setLineDash([]);
+}
+function drawLandmark(ctx, index, selected, secured, open) {
+  const { point: [x, y], color: color2 } = landmarks[index];
+  const live = secured || open;
+  ctx.lineWidth = 1;
+  ctx.fillStyle = "#120c22df";
+  ctx.strokeStyle = selected ? WHITE2 : live ? color2 : "#99869d";
+  const marker = selected ? 10 : 8;
+  diamond(ctx, x, y, marker);
+  ctx.fill();
+  ctx.stroke();
+  ctx.fillStyle = live ? color2 : DIM;
+  if (secured) {
+    ctx.strokeStyle = color2;
+    ctx.lineWidth = 1.7;
+    ctx.beginPath();
+    ctx.moveTo(x - 3.5, y);
+    ctx.lineTo(x - 0.8, y + 3);
+    ctx.lineTo(x + 4, y - 3);
+    ctx.stroke();
+  } else if (open) {
+    diamond(ctx, x, y, 3.3);
+    ctx.fill();
+  } else {
+    ctx.fillRect(x - 3.5, y - 1, 7, 5);
+    ctx.strokeRect(x - 2, y - 4, 4, 5);
+  }
+  if (selected) {
+    ctx.strokeStyle = color2;
+    ctx.lineWidth = 1.5;
+    diamond(ctx, x, y, 14);
+    ctx.stroke();
+  }
+  plate(ctx, x - 65, y + 13, 130, 29, 6);
+  ctx.fillStyle = selected ? "#20122af7" : "#110b22ed";
+  ctx.fill();
+  ctx.lineWidth = selected ? 1.5 : 1;
+  ctx.strokeStyle = selected ? color2 : live ? color2 + "8f" : "#66566e";
+  ctx.stroke();
+}
+function button(ctx, x, y, color2, primary) {
+  plate(ctx, x - 68, y - 17, 136, 34, 10);
+  const fill = ctx.createLinearGradient(0, y - 17, 0, y + 17);
+  fill.addColorStop(0, primary ? "#473059" : "#2b1a35");
+  fill.addColorStop(1, "#160e24");
+  ctx.fillStyle = fill;
+  ctx.fill();
+  ctx.strokeStyle = color2;
+  ctx.lineWidth = primary ? 1.75 : 1;
+  ctx.stroke();
+  if (primary) {
+    ctx.fillStyle = color2 + "b5";
+    ctx.fillRect(x - 55, y - 15, 27, 2);
+  }
+}
 var WorldMap = {
   name: "world-map",
   enter() {
@@ -38934,35 +39047,91 @@ var WorldMap = {
     let age = 0, previousAxis = 0, axisReady = false;
     game.camera.snap(320, 180, 1);
     track("world-map", 0.4, 0.78);
-    game.spawn({ texture: "panorama-2", x: 320, y: 180, width: 1024, height: 360, layer: "back" });
-    const map = game.texture.create({ id: "snack-city-map", layer: "hud", width: 640, height: 360, x: 320, y: 180 });
-    map.handle.z = 2;
-    label("SNACK CITY", 27, 23, 24, WHITE2, "left", 8);
-    label(progress.cleared.length + " / " + CHAPTERS.length + " DISTRICTS SECURED", 611, 20, 10, GOLD, "right", 8, "mono-bold");
-    label("TITLE", 611, 40, 10, MUTED, "right", 8);
-    const story = progress.complete ? "Grumblegrub is down. One last order just came in." : progress.choices.includes(3) ? "Both signals converge on the Blackout Grid." : progress.last >= 0 && progress.cleared.includes(progress.last) ? CHAPTERS[progress.last].clear : progress.lastLevel >= 0 ? LEVELS[progress.lastLevel].name + " cleared. The relay signal is getting stronger." : "Follow the signal to the kitchen relay.";
-    label(story, 28, 47, 11, "#e5c9ef", "left", 8);
-    for (const [index, node] of nodes2.entries()) {
+    game.spawn({
+      id: "city-panorama",
+      texture: "snack-city-map",
+      x: 320,
+      y: (MAP_TOP + MAP_BOTTOM) / 2,
+      width: 640,
+      height: MAP_BOTTOM - MAP_TOP,
+      layer: "back"
+    });
+    const chrome = game.texture.create({ id: "map-frame", layer: "hud" });
+    chrome.draw((ctx) => {
+      ctx.fillStyle = INK2;
+      ctx.fillRect(0, 0, 640, MAP_TOP);
+      ctx.fillRect(0, MAP_BOTTOM, 640, 360 - MAP_BOTTOM);
+      const fade = ctx.createLinearGradient(0, 226, 0, MAP_BOTTOM);
+      fade.addColorStop(0, "#100c2400");
+      fade.addColorStop(1, INK2);
+      ctx.fillStyle = fade;
+      ctx.fillRect(0, 226, 640, MAP_BOTTOM - 226);
+      ctx.fillStyle = "#ee73a9";
+      ctx.fillRect(0, MAP_TOP - 2, 192, 2);
+      ctx.fillStyle = "#643a70";
+      ctx.fillRect(192, MAP_TOP - 2, 448, 2);
+      plate(ctx, TITLE_BOUNDS.left, 229, TITLE_BOUNDS.right - TITLE_BOUNDS.left, 23, 6);
+      ctx.fillStyle = "#161026";
+      ctx.fill();
+      ctx.strokeStyle = "#a684b5";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+    const lines = game.texture.create({ id: "map-routes", layer: "hud" });
+    lines.handle.z = 1;
+    lines.draw((ctx) => drawRoutes(ctx, progress));
+    const pulse = game.texture.create({ id: "map-selection-glow", layer: "hud", width: 46, height: 46, x: 0, y: 0 });
+    pulse.handle.z = 2;
+    pulse.draw((ctx) => {
+      const glow = ctx.createRadialGradient(23, 23, 3, 23, 23, 23);
+      glow.addColorStop(0, "#fff2b66e");
+      glow.addColorStop(1, "#fff2b600");
+      ctx.fillStyle = glow;
+      ctx.fillRect(0, 0, 46, 46);
+      diamond(ctx, 23, 23, 17);
+      ctx.strokeStyle = "#fff2c8a0";
+      ctx.lineWidth = 1;
+      ctx.stroke();
+    });
+    const panel = game.texture.create({ id: "map-stops", layer: "hud" });
+    panel.handle.z = 3;
+    const title2 = label("SNACK CITY", 22, 21, 25, "#ffe5ad", "left", 8);
+    title2.shadow = { color: "#cd447d", x: 2, y: 2 };
+    const story = progress.complete ? "Grumblegrub is down. One last order came in." : progress.choices.includes(GRID) ? "Both signals converge on the Blackout Grid." : progress.last >= 0 && progress.cleared.includes(progress.last) ? CHAPTERS[progress.last].clear : progress.lastLevel >= 0 ? LEVELS[progress.lastLevel].name + " cleared." : "Follow the kitchen relay.";
+    const storyText = label(story, 198, 19, 10, "#e0bddf", "left");
+    if (storyText.width > 330) storyText.scale = 330 / storyText.width;
+    label(progress.cleared.length + "/" + CHAPTERS.length + " DISTRICTS SECURED", 198, 32, 9, GOLD, "left", 8, "mono-bold");
+    label("TITLE", 595, 240, 10, WHITE2);
+    for (const [index, landmark] of landmarks.entries()) {
+      const [x, y] = landmark.point;
       const district = CHAPTERS[index];
       const secured = progress.cleared.includes(index);
-      const unlocked = index === BONUS ? progress.complete : progress.choices.includes(index);
-      const available = secured || unlocked;
+      const open = index === BONUS ? progress.complete : progress.choices.includes(index);
       const count = district?.levels.filter((level) => progress.clearedLevels.includes(level)).length ?? 0;
-      const status = secured ? "SECURED" : index === BONUS ? unlocked ? "OPTIONAL BOSS" : "LOCKED" : (unlocked ? count + " / " : "") + district.levels.length + (district.levels.length === 1 ? " LEVEL" : " LEVELS") + (unlocked ? "" : "  /  LOCKED");
-      label(node.name, node.x + 12, node.y + 15, 13, available ? WHITE2 : MUTED, "left", 8);
-      label(status, node.x + 12, node.y + 31, 9, available ? node.color : MUTED, "left", 8, "mono-bold");
+      label(landmark.name, x, y + 22, 11, secured || open ? WHITE2 : "#d5c8e0");
+      label(
+        secured ? "SECURED" : !open ? "LOCKED" : index === BONUS ? "OPTIONAL BOSS" : count + " / " + district.levels.length + " LEVELS",
+        x,
+        y + 34,
+        8,
+        secured || open ? landmark.color : "#bbabc8",
+        "center",
+        8,
+        "mono-bold"
+      );
     }
-    const heading = label("", 41, 211, 17, WHITE2, "left", 8);
-    const briefing = label("", 42, 233, 11, "#ebd2eb", "left", 8);
-    const cards = Array.from({ length: 4 }, (_, index) => ({
-      title: label("", 42 + index * 145, 264, 11, WHITE2, "left", 8),
-      status: label("", 42 + index * 145, 278, 8, MUTED, "left", 8, "mono-bold")
+    const heading = label("", TILE_X, 270, 20, WHITE2, "left", 8);
+    heading.shadow = { color: "#36153d", x: 1, y: 2 };
+    const briefing = label("", TILE_X + 1, 290, 11, "#ecd7ee", "left", 8);
+    const tiles = Array.from({ length: 4 }, (_, index) => ({
+      title: label("", TILE_X + 22 + index * TILE_GAP, 317, 11, WHITE2, "left", 8),
+      status: label("", TILE_X + 22 + index * TILE_GAP, 330, 9, MUTED, "left", 8, "mono-bold")
     }));
-    const itinerary = label("", 42, 310, 9, "#e0cbee", "left", 8);
-    const action = label("", 531, 310, 11, WHITE2, "center", 8);
-    const finishButton = label("FINISH RUN", 531, 310, 11, WHITE2, "center", 8);
-    const footer2 = label("", 320, 345, 10, WHITE2, "center", 8);
-    footer2.text = touchMode() ? "Tap a district to see its levels" : "\u2190 \u2192  Browse    Enter / A  Confirm    Esc / B  Title";
+    const itinerary = label("", TILE_X + 1, 349, 9, "#dfd0ee", "left", 8);
+    const action = label("", ACTION_X, 278, 11, WHITE2);
+    const finishButton = label("FINISH RUN", ACTION_X, 322, 11, WHITE2);
+    const touch = touchMode();
+    const hint = label("", 618, 349, 8, MUTED, "right");
     const paint2 = () => {
       const district = CHAPTERS[selected];
       const next = progress.next[selected] ?? -1;
@@ -38970,104 +39139,55 @@ var WorldMap = {
       const secured = progress.cleared.includes(selected);
       const levels = district?.levels ?? [];
       const route = LEVELS[next];
+      const landmark = landmarks[selected];
+      pulse.handle.visible = !!landmark;
+      if (landmark) [pulse.handle.x, pulse.handle.y] = landmark.point;
       heading.text = district?.name ?? (selected === BONUS ? "After Hours" : "Snack City is safe");
-      heading.color = nodes2[selected]?.color ?? GOLD;
-      briefing.text = district ? secured ? district.clear : active2 ? district.briefing : selected === 3 ? "Secure Sizzle Docks and Sugar Carnival to unlock this district." : "Defeat the Iron Oven to open this route." : selected === BONUS ? active2 ? "Doom Burger is waiting on the old strip." : "Secure all four districts to unlock this fight." : "Bank your score and celebrate with the crew.";
-      for (const [index, card] of cards.entries()) {
+      heading.color = landmark?.color ?? GOLD;
+      briefing.text = district ? secured ? district.clear : active2 ? district.briefing : selected === GRID ? "Secure Sizzle Docks and Sugar Carnival to unlock this district." : "Defeat the Iron Oven to open this route." : selected === BONUS ? active2 ? "Doom Burger is waiting on the old strip." : "Secure all four districts to unlock this fight." : "Bank your score and celebrate with the crew.";
+      for (const [index, tile] of tiles.entries()) {
         const level = levels[index];
-        card.title.visible = card.status.visible = level !== void 0;
+        tile.title.visible = tile.status.visible = level !== void 0;
         if (level === void 0) continue;
         const complete = progress.clearedLevels.includes(level);
-        card.title.text = LEVELS[level].name.toUpperCase();
-        card.title.color = level === next || complete ? WHITE2 : MUTED;
-        card.status.text = complete ? "CLEARED" : level === next ? "NEXT / 3 STAGES" : "LOCKED";
-        card.status.color = level === next || complete ? heading.color : MUTED;
+        tile.title.text = LEVELS[level].name.toUpperCase();
+        tile.title.color = level === next || complete ? WHITE2 : "#bba9c9";
+        tile.status.text = complete ? "CLEARED" : level === next ? "NEXT / 3 STAGES" : "LOCKED";
+        tile.status.color = level === next || complete ? heading.color : DIM;
       }
       itinerary.text = route ? route.stages.map((stage) => STAGES[stage].title).join("  \u203A  ") : selected === BONUS ? "BOSS  /  DOOM BURGER" : selected === FINISH ? "FINAL SCORE  /  " + String(progress.score).padStart(7, "0") : "";
-      action.text = district ? "START LEVEL" : selected === BONUS ? "TAKE CHALLENGE" : "FINISH RUN";
-      action.x = selected === BONUS && progress.complete ? 366 : 531;
+      action.text = district ? "START LEVEL  \u203A" : selected === BONUS ? "TAKE CHALLENGE  \u203A" : "FINISH RUN  \u203A";
       action.visible = active2;
       finishButton.visible = progress.complete && selected === BONUS;
-      map.clear().draw((ctx) => {
-        ctx.fillStyle = "#151127ef";
-        ctx.fillRect(0, 0, 640, 360);
-        ctx.fillStyle = "#112837";
-        ctx.beginPath();
-        ctx.moveTo(0, 59);
-        ctx.lineTo(160, 59);
-        ctx.lineTo(206, 81);
-        ctx.lineTo(206, 107);
-        ctx.lineTo(145, 147);
-        ctx.lineTo(127, 188);
-        ctx.lineTo(0, 188);
-        ctx.closePath();
-        ctx.fill();
-        ctx.strokeStyle = "#28596b";
-        ctx.lineWidth = 2;
-        ctx.stroke();
-        ctx.lineWidth = 1;
-        ctx.strokeStyle = "#332b48";
-        for (let x = 214; x < 700; x += 25) {
-          ctx.beginPath();
-          ctx.moveTo(x, 56);
-          ctx.lineTo(x - 44, 189);
-          ctx.stroke();
-        }
-        for (let y = 65; y < 190; y += 18) ctx.strokeRect(17, y, 623, 0.4);
-        const link = (a, b, open) => {
-          const first = nodes2[a], target = nodes2[b];
-          ctx.beginPath();
-          if (first.x === target.x) {
-            ctx.moveTo(first.x + nodeWidth / 2, first.y + nodeHeight);
-            ctx.lineTo(target.x + nodeWidth / 2, target.y);
-          } else {
-            const end = first.x + nodeWidth, middle = (end + target.x) / 2;
-            ctx.moveTo(end, first.y + nodeHeight / 2);
-            ctx.lineTo(middle, first.y + nodeHeight / 2);
-            ctx.lineTo(middle, target.y + nodeHeight / 2);
-            ctx.lineTo(target.x, target.y + nodeHeight / 2);
-          }
-          ctx.strokeStyle = open ? target.color : "#5f506c";
-          ctx.lineWidth = open ? 2.5 : 1.5;
-          ctx.setLineDash(open ? [] : [5, 5]);
-          ctx.stroke();
-          ctx.setLineDash([]);
-        };
-        link(0, 1, progress.cleared.includes(0));
-        link(0, 2, progress.cleared.includes(0));
-        link(1, 3, progress.cleared.includes(1));
-        link(2, 3, progress.cleared.includes(2));
-        link(3, BONUS, progress.complete);
-        nodes2.forEach((node, index) => {
-          const selectedNode = index === selected;
-          ctx.fillStyle = selectedNode ? "#38294c" : "#211a33";
-          ctx.fillRect(node.x, node.y, nodeWidth, nodeHeight);
-          ctx.lineWidth = selectedNode ? 2.5 : 1;
-          ctx.strokeStyle = selectedNode || progress.cleared.includes(index) ? node.color : "#716281";
-          ctx.strokeRect(node.x, node.y, nodeWidth, nodeHeight);
-          ctx.fillStyle = node.color;
-          ctx.fillRect(node.x + 3, node.y + 6, 3, nodeHeight - 12);
-        });
-        ctx.fillStyle = "#211732";
-        ctx.fillRect(27, 194, 586, 137);
-        ctx.strokeStyle = heading.color;
-        ctx.lineWidth = 1;
-        ctx.strokeRect(27, 194, 586, 137);
+      hint.text = touch ? "Tap a landmark to see its route" : "\u2190 \u2192 Browse   \xB7   Enter / A Confirm";
+      panel.clear().draw((ctx) => {
+        landmarks.forEach((_, index) => drawLandmark(
+          ctx,
+          index,
+          index === selected,
+          progress.cleared.includes(index),
+          progress.choices.includes(index) || index === BONUS && progress.complete
+        ));
+        ctx.fillStyle = heading.color + "b6";
+        ctx.fillRect(22, 257, 444, 2);
+        ctx.fillStyle = heading.color + "3d";
+        ctx.fillRect(466, 257, 152, 2);
         levels.forEach((level, index) => {
-          const x = 34 + index * 145;
-          ctx.fillStyle = level === next ? "#473055" : "#1a142a";
-          ctx.fillRect(x, 251, 137, 35);
-          ctx.strokeStyle = level === next ? heading.color : "#5b4867";
-          ctx.strokeRect(x, 251, 137, 35);
+          const x = TILE_X + index * TILE_GAP;
+          const cleared = progress.clearedLevels.includes(level);
+          const lit = level === next;
+          plate(ctx, x, 304, 137, 34, 6);
+          ctx.fillStyle = lit ? "#392446" : "#1d142e";
+          ctx.fill();
+          ctx.strokeStyle = lit ? heading.color : "#544263";
+          ctx.lineWidth = lit ? 1.5 : 1;
+          ctx.stroke();
+          diamond(ctx, x + 11, 321, 4);
+          ctx.fillStyle = lit || cleared ? heading.color : "#655272";
+          ctx.fill();
         });
-        ctx.strokeStyle = heading.color;
-        const button = (x) => {
-          ctx.fillStyle = "#543453";
-          ctx.fillRect(x - 69, 296, 138, 27);
-          ctx.strokeRect(x - 69, 296, 138, 27);
-        };
-        if (active2) button(action.x);
-        if (finishButton.visible) button(finishButton.x);
+        if (active2) button(ctx, ACTION_X, 278, heading.color, true);
+        if (finishButton.visible) button(ctx, ACTION_X, 322, GOLD, false);
       });
     };
     const select = (index) => {
@@ -39087,13 +39207,14 @@ var WorldMap = {
     paint2();
     game.step("world-map-navigation", (dt) => {
       age += dt;
+      pulse.handle.alpha = 0.68 + deterministicMath.sin(age * 3.6) * 0.26;
       toggleMute();
       const axis2 = moveAxis();
       const strength2 = deterministicMath.abs(axis2.x) >= deterministicMath.abs(axis2.y) ? axis2.x : axis2.y;
       const direction2 = deterministicMath.abs(strength2) > 0.45 ? deterministicMath.sign(strength2) : 0;
       if (age < 0.25) return;
       if (!direction2) axisReady = true;
-      const stops = nodes2.length + Number(progress.complete);
+      const stops = landmarks.length + Number(progress.complete);
       if (axisReady && direction2 && direction2 !== previousAxis) select((selected + direction2 + stops) % stops);
       previousAxis = direction2;
       if (game.controls.justPressed("back")) return game.scenes.go("title");
@@ -39101,17 +39222,18 @@ var WorldMap = {
       const pointer = game.input.pointer;
       if (!pointer?.pressed) return;
       const { x, y } = pointer;
-      if (x > 565 && y > 28 && y < 55) return game.scenes.go("title");
-      if (y >= 293 && y <= 327) {
-        if (finishButton.visible && deterministicMath.abs(x - finishButton.x) <= 73) return commit(FINISH);
-        if (action.visible && deterministicMath.abs(x - action.x) <= 73) return commit(selected);
+      if (x >= TITLE_BOUNDS.left && x <= TITLE_BOUNDS.right && y >= TITLE_BOUNDS.top && y <= TITLE_BOUNDS.bottom)
+        return game.scenes.go("title");
+      if (deterministicMath.abs(x - ACTION_X) <= 75) {
+        if (finishButton.visible && deterministicMath.abs(y - 322) <= 20) return commit(FINISH);
+        if (action.visible && deterministicMath.abs(y - 278) <= 20) return commit(selected);
       }
-      if (y >= 251 && y <= 286) {
-        const slot = deterministicMath.floor((x - 34) / 145);
+      if (y >= 302 && y <= 340 && x >= TILE_X) {
+        const slot = deterministicMath.floor((x - TILE_X) / TILE_GAP);
         const level = CHAPTERS[selected]?.levels[slot];
         if (level !== void 0 && progress.next[selected] === level) return commit(selected);
       }
-      const node = nodes2.findIndex((n) => x >= n.x && x <= n.x + nodeWidth && y >= n.y && y <= n.y + nodeHeight);
+      const node = landmarks.findIndex(({ point: [cx, cy] }) => deterministicMath.abs(x - cx) <= 66 && y >= cy - 23 && y <= cy + 43);
       if (node >= 0) select(node);
     });
   }
@@ -39122,7 +39244,7 @@ var go = (name) => () => game.scenes.go(name);
 var chooseFighter = go("fighters");
 var title = go("title");
 var pauseBack = () => game.scenes.pop();
-var INK2 = "#100e26";
+var INK3 = "#100e26";
 var PAPER2 = "#fff0d4";
 var HOT = "#ff9867";
 function type(text2, x, y, size = 13, color2 = PAPER2, align4 = "left", z = 14, weight = "sans-bold") {
@@ -39212,7 +39334,7 @@ function menu(choices, x, y, width, back, row = 32) {
       ctx.stroke();
     });
     labels.forEach((label2, i) => {
-      label2.color = i === selected && deterministicMath.abs(selection - i) < 0.44 ? INK2 : PAPER2;
+      label2.color = i === selected && deterministicMath.abs(selection - i) < 0.44 ? INK3 : PAPER2;
     });
   };
   repaint();
@@ -39394,7 +39516,7 @@ var FighterSelect = {
     frame.handle.z = 5;
     type("SELECT YOUR FIGHTER", 36, 48, 23, PAPER2, "left", 15);
     type("BACK", 574, 49, 11, PAPER2, "center", 15);
-    type("FIGHT  \u203A", 535, 208, 17, INK2, "center", 15);
+    type("FIGHT  \u203A", 535, 208, 17, INK3, "center", 15);
     const name = type("", 268, 86, 26, PAPER2, "left", 15);
     const role = type("", 269, 110, 10, CYAN, "left", 15, "mono-bold");
     const quote = type("", 269, 132, 14, PAPER2, "left", 15, "sans");
@@ -39431,7 +39553,7 @@ var FighterSelect = {
       power.color = fighter.color;
       hint.text = fighter.powerHint;
       frame.clear().draw((ctx) => {
-        const plate = (x, y, width, height, cut) => {
+        const plate2 = (x, y, width, height, cut) => {
           ctx.beginPath();
           ctx.moveTo(x + cut, y);
           ctx.lineTo(x + width, y);
@@ -39443,7 +39565,7 @@ var FighterSelect = {
         gradient3.addColorStop(0, fighter.color + "49");
         gradient3.addColorStop(0.55, "#26173d");
         gradient3.addColorStop(1, "#110c23");
-        plate(32, 69, 223, 152, 24);
+        plate2(32, 69, 223, 152, 24);
         ctx.fillStyle = gradient3;
         ctx.fill();
         ctx.strokeStyle = fighter.color + "b5";
@@ -39453,19 +39575,19 @@ var FighterSelect = {
         for (let i = 0; i < 5; i++) ctx.fillRect(71 + i * 23, 197, 18, 2);
         ctx.fillStyle = "#6a426e";
         ctx.fillRect(269, 143, 332, 1);
-        plate(445, 191, 162, 34, 10);
+        plate2(445, 191, 162, 34, 10);
         ctx.fillStyle = fighter.color;
         ctx.fill();
         ctx.strokeStyle = "#fff4d3";
         ctx.stroke();
-        plate(538, 34, 71, 29, 8);
+        plate2(538, 34, 71, 29, 8);
         ctx.fillStyle = "#2b1d3b";
         ctx.fill();
         ctx.strokeStyle = "#8b688c";
         ctx.stroke();
         FIGHTERS.forEach((item, i) => {
           const x = cardX(i);
-          plate(x, 234, 87, 86, 8);
+          plate2(x, 234, 87, 86, 8);
           ctx.fillStyle = i === selected ? item.color + "37" : "#151126";
           ctx.fill();
           ctx.strokeStyle = i === selected ? item.color : "#665271";
