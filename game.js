@@ -7205,7 +7205,7 @@ function installWebGpu(k, prepared, deferRegistration = false) {
   let disposed = false;
   let drawCalls = 0, lastInstances = 0, losses = 0, expectLoss = false, recovering = false;
   let shot = null;
-  const build = () => {
+  const build2 = () => {
     if (!device || !context) return;
     pipelines.clear();
     bind = bindScreen = null;
@@ -7284,7 +7284,7 @@ function installWebGpu(k, prepared, deferRegistration = false) {
         return;
       }
       adopt(acquired);
-      build();
+      build2();
       recovering = false;
       k.hooks.emit("boot.contextRestored", void 0);
     } catch (err) {
@@ -7312,7 +7312,7 @@ function installWebGpu(k, prepared, deferRegistration = false) {
     const initialDevice = device;
     initialDevice.pushErrorScope("validation");
     try {
-      build();
+      build2();
     } catch (error) {
       await initialDevice.popErrorScope();
       throw error;
@@ -33726,6 +33726,336 @@ function fighterById(id2) {
   return FIGHTERS.find((fighter) => fighter.id === id2) ?? DEFAULT_FIGHTER;
 }
 
+// game/expanded-streets.ts
+var LANES = [230, 269, 301];
+var FOES = { g: "goblin", f: "fiend", m: "mold" };
+function build(route) {
+  const { streets, music, accent, weather, art, exit, boss } = route;
+  return streets.map(([title2, subtitle, sections, traps], part) => {
+    const bossId = part === 2 ? boss : void 0;
+    const lastFight = sections[sections.length - 1][0];
+    const arena = lastFight + 335;
+    const width = bossId ? arena + 800 : lastFight + 420;
+    const fights = sections.map(([at, ...rows]) => ({
+      at,
+      foes: rows.flatMap((row, lane) => Array.from(row, (role, column) => [
+        FOES[role.toLowerCase()],
+        at + (role === role.toUpperCase() ? -105 : 128 + 51 * lane + 48 * column),
+        LANES[lane] + (column ? 5 : 0)
+      ]))
+    }));
+    const hazards = traps.map(([kind, x, lane], i) => {
+      const y = LANES[lane];
+      if (kind === "relay") return { kind, x, y, phase: 0.55 + i * 1.23 % 3.1 };
+      if (kind === "vent") return { kind, x, y, phase: 0.6 + i * 1.38 % 3.2, spray: art < 13 ? "water" : "sugar" };
+      if (kind === "sign") return { kind, x, y, trigger: x - 224, label: art < 13 ? "CARGO" : art < 16 ? "SHOW" : "HIGH VOLT" };
+      const direction2 = i % 2 ? 1 : -1;
+      return { kind, x, y, direction: direction2, trigger: x - (direction2 === 1 ? 0 : 338) };
+    });
+    const props = [
+      ["crate", 147, 269, (art + part) % 4],
+      ...sections.map(([at], wave) => [
+        art < 13 ? "barrel" : wave % 2 ? "vendor" : "crate",
+        at + 95,
+        LANES[(wave + part + 2) % 3],
+        wave % 2 ? "score" : "health"
+      ]),
+      ["crate", width - 133, 302, "health"]
+    ];
+    if (bossId) props.push(["crate", arena + 91, 228, "health"]);
+    return {
+      title: title2,
+      subtitle,
+      art,
+      music,
+      accent,
+      weather,
+      width,
+      fights,
+      props,
+      hazards,
+      destination: streets[part + 1]?.[0] ?? exit,
+      boss: bossId ? { id: bossId, at: arena, x: arena + 293 } : void 0
+    };
+  });
+}
+var routes = [
+  {
+    art: 10,
+    music: "cold-storage",
+    accent: "#83f5e8",
+    weather: "mist",
+    exit: "FERRY WORKS",
+    streets: [
+      [
+        "ICEHOUSE APPROACH",
+        "Follow the frost trail to the missing ferry keys.",
+        [[113, "m", "", "g"], [422, "g", "f", ""], [758, "", "gg", "m"]],
+        [["vent", 430, 1], ["vent", 714, 2]]
+      ],
+      [
+        "FREEZER AISLE",
+        "The pipes hiss before they blow. Mind the other lane.",
+        [[116, "g", "f", "g"], [413, "Gm", "", "f"], [779, "m", "f", "g"]],
+        [["vent", 347, 0], ["vent", 612, 2], ["vent", 879, 1]]
+      ],
+      [
+        "THAW CHAMBER",
+        "Get the ferry keys out before the thaw cycle.",
+        [[127, "m", "", "ff"], [499, "G", "f", "m"], [845, "gm", "f", "g"]],
+        [["cart", 555, 2], ["vent", 735, 1], ["vent", 962, 0]]
+      ]
+    ]
+  },
+  {
+    art: 11,
+    music: "ferry-works",
+    accent: "#ffab6d",
+    weather: "rain",
+    exit: "BREAKWATER",
+    streets: [
+      [
+        "WELDING YARD",
+        "The ferry crew left a gap under the loading cranes.",
+        [[118, "g", "gg", ""], [403, "m", "", "f"], [702, "G", "f", "m"]],
+        [["sign", 515, 1], ["sign", 809, 0]]
+      ],
+      [
+        "FERRY SLIP",
+        "Follow the haulage carts to the outer gate.",
+        [[130, "f", "", "g"], [424, "gm", "f", "G"], [773, "", "m", "ff"]],
+        [["cart", 583, 2], ["cart", 706, 0], ["sign", 882, 2]]
+      ],
+      [
+        "CRANE SPAN",
+        "The cranes are dropping the last of Calamari\u2019s cargo.",
+        [[114, "m", "g", "f"], [469, "f", "G", "m"], [858, "mm", "f", "G"]],
+        [["sign", 491, 0], ["cart", 775, 1], ["sign", 1002, 2]]
+      ]
+    ]
+  },
+  {
+    art: 12,
+    music: "breakwater",
+    accent: "#99e0ff",
+    weather: "rain",
+    exit: "CAPTAIN CALAMARI",
+    boss: "calamari",
+    streets: [
+      [
+        "STORM GATE",
+        "Ride out the spray and make for the lighthouse.",
+        [[122, "f", "", "m"], [445, "", "gG", "f"], [786, "f", "m", "g"]],
+        [["vent", 379, 2], ["vent", 687, 1], ["vent", 951, 0]]
+      ],
+      [
+        "LIGHTHOUSE WALK",
+        "Calamari is jamming the signal from the sea wall.",
+        [[117, "m", "g", "f"], [460, "m", "F", "g"], [896, "f", "m", "f"]],
+        [["vent", 415, 0], ["sign", 747, 2], ["vent", 931, 1], ["cart", 1132, 0]]
+      ],
+      [
+        "OUTER MOLE",
+        "Chase Calamari off the sea wall and take back the beacon.",
+        [[112, "m", "f", ""], [421, "G", "m", "f"], [728, "", "ff", "G"]],
+        [["vent", 389, 1], ["sign", 662, 2], ["vent", 846, 0]]
+      ]
+    ]
+  },
+  {
+    art: 13,
+    music: "bumper-arcade",
+    accent: "#ff92c9",
+    weather: "spark",
+    exit: "MIRROR MAZE",
+    streets: [
+      [
+        "TOKEN ALLEY",
+        "The prize counter is taking orders from upstairs.",
+        [[116, "g", "gg", ""], [383, "f", "", "g"], [730, "m", "f", "G"]],
+        [["cart", 609, 1], ["sign", 826, 2]]
+      ],
+      [
+        "BUMPER ARENA",
+        "Cross the bumper lanes between passes.",
+        [[111, "g", "g", "g"], [402, "G", "f", "m"], [761, "m", "", "ff"]],
+        [["cart", 474, 0], ["cart", 549, 2], ["cart", 1094, 1]]
+      ],
+      [
+        "JACKPOT FLOOR",
+        "Smash through the jackpot floor to find the staff exit.",
+        [[126, "", "m", "g"], [461, "m", "g", "F"], [827, "f", "gm", "G"]],
+        [["vent", 363, 1], ["cart", 592, 0], ["sign", 949, 2]]
+      ]
+    ]
+  },
+  {
+    art: 14,
+    music: "mirror-maze",
+    accent: "#c392ff",
+    weather: "mist",
+    exit: "PARADE BACKLOT",
+    streets: [
+      [
+        "LOOKING GLASS",
+        "Watch your back. Those shapes in the mirrors are real.",
+        [[129, "G", "g", "m"], [422, "m", "F", ""], [799, "G", "m", "f"]],
+        [["sign", 481, 1], ["vent", 870, 0]]
+      ],
+      [
+        "LAUGHING HALL",
+        "The funhouse mouths are spitting boiling sugar.",
+        [[111, "m", "", "f"], [414, "f", "m", "G"], [790, "m", "m", "g"]],
+        [["vent", 351, 0], ["vent", 453, 2], ["vent", 745, 1], ["sign", 949, 2]]
+      ],
+      [
+        "HOUSE OF ECHOES",
+        "The service door is just past the last mirror.",
+        [[119, "G", "f", "m"], [449, "g", "M", "f"], [834, "F", "m", "fg"]],
+        [["sign", 477, 2], ["vent", 735, 0], ["cart", 1087, 1]]
+      ]
+    ]
+  },
+  {
+    art: 15,
+    music: "parade-backlot",
+    accent: "#ffc37c",
+    weather: "spark",
+    exit: "QUEEN CUPCAKE",
+    boss: "cupcake",
+    streets: [
+      [
+        "CONFETTI YARD",
+        "The floats are rolling out with or without a driver.",
+        [[127, "g", "f", "g"], [452, "m", "f", "G"], [790, "ff", "g", "m"]],
+        [["cart", 571, 2], ["cart", 626, 0], ["sign", 875, 1]]
+      ],
+      [
+        "FLOAT GARAGE",
+        "Falling rigging ahead. Take the clear lane.",
+        [[118, "m", "", "ff"], [424, "G", "f", "m"], [836, "f", "m", "f"]],
+        [["sign", 412, 0], ["sign", 629, 2], ["vent", 786, 0], ["sign", 953, 1]]
+      ],
+      [
+        "GRAND PARADE",
+        "Cupcake took the master relay aboard her parade float.",
+        [[120, "f", "m", ""], [398, "G", "f", "m"], [758, "mm", "f", "G"]],
+        [["cart", 479, 1], ["vent", 616, 0], ["sign", 848, 2]]
+      ]
+    ]
+  },
+  {
+    art: 16,
+    music: "relay-row",
+    accent: "#c3ff84",
+    weather: "spark",
+    exit: "GHOST FREIGHT",
+    streets: [
+      [
+        "RELAY ROW",
+        "Grumblegrub is drawing power from every kitchen on the grid.",
+        [[109, "g", "", "f"], [418, "m", "g", "G"], [776, "f", "m", "g"]],
+        [["relay", 402, 1], ["relay", 738, 2]]
+      ],
+      [
+        "LIVE SWITCHYARD",
+        "The floor flashes before the relays discharge.",
+        [[114, "f", "", "m"], [399, "F", "g", "m"], [813, "m", "f", "G"]],
+        [["relay", 386, 0], ["relay", 507, 2], ["relay", 766, 1], ["relay", 1001, 0]]
+      ],
+      [
+        "TRANSFORMER WALK",
+        "Cut across the transformers to reach the freight elevator.",
+        [[121, "", "m", "f"], [478, "m", "F", "g"], [867, "f", "m", "ff"]],
+        [["relay", 387, 1], ["sign", 671, 0], ["relay", 796, 2], ["relay", 1018, 1]]
+      ]
+    ]
+  },
+  {
+    art: 17,
+    music: "ghost-freight",
+    accent: "#ff9d77",
+    weather: "mist",
+    exit: "BREAKER HALL",
+    streets: [
+      [
+        "FREIGHT ELEVATOR",
+        "The service elevator opens below the old soda line.",
+        [[115, "g", "f", "m"], [412, "f", "m", "G"], [760, "m", "f", "g"]],
+        [["cart", 523, 2], ["relay", 695, 0], ["sign", 875, 1]]
+      ],
+      [
+        "GHOST FREIGHT",
+        "The line is live. Listen for the runaway carts.",
+        [[121, "f", "f", ""], [468, "G", "m", "f"], [842, "m", "G", "ff"]],
+        [["cart", 543, 0], ["relay", 494, 1], ["cart", 1038, 2], ["relay", 929, 0]]
+      ],
+      [
+        "SIGNAL TUNNEL",
+        "Follow the amber signal to the transfer hatch.",
+        [[122, "m", "f", ""], [434, "m", "G", "f"], [802, "F", "m", "m"]],
+        [["sign", 417, 1], ["relay", 657, 2], ["cart", 955, 0], ["relay", 1086, 1]]
+      ]
+    ]
+  },
+  {
+    art: 18,
+    music: "breaker-hall",
+    accent: "#7eeaff",
+    weather: "spark",
+    exit: "BLACKOUT SPIRE",
+    streets: [
+      [
+        "COOLANT BRIDGE",
+        "The coolant has dropped. Take the exposed maintenance path.",
+        [[121, "m", "", "f"], [423, "G", "f", "m"], [827, "fm", "g", "F"]],
+        [["relay", 404, 2], ["relay", 576, 0], ["relay", 887, 1]]
+      ],
+      [
+        "BREAKER HALL",
+        "Grumblegrub\u2019s last backup is wired through the floor.",
+        [[118, "m", "f", "G"], [464, "m", "F", "m"], [846, "f", "gm", "f"]],
+        [["relay", 332, 0], ["relay", 513, 1], ["relay", 748, 2], ["relay", 944, 0]]
+      ],
+      [
+        "CORE CATWALK",
+        "Keep moving. The tower can run on reserve power.",
+        [[119, "f", "m", "g"], [448, "G", "f", "fm"], [860, "m", "F", "m"]],
+        [["relay", 392, 0], ["sign", 596, 2], ["relay", 812, 1], ["relay", 1022, 2]]
+      ]
+    ]
+  },
+  {
+    art: 19,
+    music: "blackout-spire",
+    accent: "#d1a1ff",
+    weather: "rain",
+    exit: "GRUMBLEGRUB",
+    boss: "grumblegrub",
+    streets: [
+      [
+        "SPIRE SERVICE DECK",
+        "From up here you can see which kitchens are still dark.",
+        [[121, "f", "m", "G"], [423, "m", "F", "g"], [803, "fm", "g", "f"]],
+        [["relay", 358, 1], ["sign", 581, 0], ["relay", 749, 2], ["sign", 979, 1]]
+      ],
+      [
+        "ANTENNA WALK",
+        "The spire is pulling lightning right into the relay.",
+        [[112, "m", "f", "g"], [410, "G", "m", "f"], [819, "m", "fG", "m"]],
+        [["relay", 360, 0], ["relay", 502, 1], ["relay", 770, 2], ["sign", 993, 1]]
+      ],
+      [
+        "TOP OF THE GRID",
+        "Take down Grumblegrub and put Snack City back on the air.",
+        [[120, "m", "f", "G"], [410, "f", "m", "f"], [732, "m", "F", "m"]],
+        [["relay", 336, 2], ["relay", 529, 0], ["sign", 837, 1]]
+      ]
+    ]
+  }
+];
+var EXPANDED_STAGES = routes.flatMap(build);
+
 // game/levels.ts
 var ALLIES = [
   { key: "burger", name: "Burger Bruiser", move: "Griddle Charge", color: "#ff9a63" },
@@ -33751,12 +34081,14 @@ var BOSS_NAMES = {
   oven: "Iron Oven",
   calamari: "Captain Calamari",
   cupcake: "Queen Cupcake",
+  grumblegrub: "Grumblegrub",
   "doom-burger": "Doom Burger"
 };
 var BOSS_MUSIC = {
   oven: "iron-oven",
   calamari: "captain-calamari",
   cupcake: "queen-cupcake",
+  grumblegrub: "grumblegrub",
   "doom-burger": "doom-burger"
 };
 var city = [
@@ -34086,34 +34418,62 @@ var STAGES = [
       ["crate", 816, 303, "health"],
       ["crate", 1134, 302, "health"]
     ]
-  }
+  },
+  ...EXPANDED_STAGES
 ];
+var LEVELS = [
+  { name: "Kitchen Uprising", stages: [0, 1, 2] },
+  { name: "Harbor Relay", stages: [3, 4, 5] },
+  { name: "Cold Storage", stages: [10, 11, 12] },
+  { name: "Ferry Works", stages: [13, 14, 15] },
+  { name: "Breakwater", stages: [16, 17, 18] },
+  { name: "Royal Midway", stages: [6, 7, 8] },
+  { name: "Bumper Arcade", stages: [19, 20, 21] },
+  { name: "Mirror Maze", stages: [22, 23, 24] },
+  { name: "Parade Backlot", stages: [25, 26, 27] },
+  { name: "Relay Row", stages: [28, 29, 30] },
+  { name: "Ghost Freight", stages: [31, 32, 33] },
+  { name: "Breaker Hall", stages: [34, 35, 36] },
+  { name: "Blackout Spire", stages: [37, 38, 39] }
+];
+var CAMPAIGN_STAGES = LEVELS.flatMap((level) => level.stages);
 var CHAPTERS = [
   {
     name: "Snack City",
-    levels: [0, 1, 2],
-    boss: "oven",
+    levels: [0],
     color: "#ff99cc",
+    needs: [],
     briefing: "Find out why the city\u2019s kitchen machines went haywire.",
     clear: "The Oven dropped a shipping manifest. Two relays are still broadcasting."
   },
   {
     name: "Sizzle Docks",
-    levels: [3, 4, 5],
-    boss: "calamari",
+    levels: [1, 2, 3, 4],
     color: "#87eff5",
-    briefing: "Follow the stolen crates to Captain Calamari\u2019s wharf.",
-    clear: "The harbor relay is down. The cooks can get their supplies again."
+    needs: [0],
+    briefing: "Find Calamari\u2019s shipping relay and follow it out to the storm barrier.",
+    clear: "The harbor beacon is ours. One signal traced back to the Blackout Grid."
   },
   {
     name: "Sugar Carnival",
-    levels: [6, 7, 8],
-    boss: "cupcake",
+    levels: [5, 6, 7, 8],
     color: "#ffb0e3",
-    briefing: "Follow the signal through the midway to Queen Cupcake.",
-    clear: "The carnival relay is down. The rides are back under local control."
+    needs: [0],
+    briefing: "Follow Queen Cupcake\u2019s signal through the rides and behind the parade.",
+    clear: "The parade is back on. Cupcake\u2019s orders came from the Blackout Grid."
+  },
+  {
+    name: "Blackout Grid",
+    levels: [9, 10, 11, 12],
+    color: "#c2ff86",
+    needs: [1, 2],
+    briefing: "Follow the stolen relays underground, then take Grumblegrub\u2019s spire.",
+    clear: "Grumblegrub is down. Snack City\u2019s kitchens are lighting up again."
   }
 ];
+function levelOf(stage) {
+  return LEVELS.findIndex((level) => level.stages.includes(stage));
+}
 function chapterOf(level) {
   return CHAPTERS.findIndex((chapter) => chapter.levels.some((index) => index === level));
 }
@@ -34366,7 +34726,7 @@ var SPRITES = [
   "heading-over",
   "heading-saved",
   "heading-credits",
-  ...STAGES.flatMap((_, stage) => ["panorama-" + stage, ...[0, 1, 2].map((panel) => "deck-" + stage + "-" + panel)])
+  ...Array.from(new Set(STAGES.map((level, stage) => level.art ?? stage))).flatMap((stage) => ["panorama-" + stage, ...[0, 1, 2].map((panel) => "deck-" + stage + "-" + panel)])
 ];
 async function loadLocalArt() {
   game.paint("shadow", 48, 12, (ctx) => {
@@ -34455,7 +34815,7 @@ async function loadLocalArt() {
       rows: 1
     })),
     { kind: "image", key: "oven-live", url: "local/oven-animated.png", w: 320, h: 160, cols: 6, rows: 2 },
-    ...["calamari", "cupcake", "doom-burger"].map((id2) => ({
+    ...Object.keys(BOSS_NAMES).filter((id2) => id2 !== "oven").map((id2) => ({
       kind: "image",
       key: "boss-" + id2,
       url: "local/boss-" + id2 + ".png",
@@ -36921,11 +37281,15 @@ var ATTACK_NAMES = {
   frosting: "FROSTING RINGS",
   rush: "KITCHEN RUSH",
   griddle: "GRIDDLE QUAKE",
-  double: "MAKE IT A DOUBLE"
+  double: "MAKE IT A DOUBLE",
+  "live-wires": "LIVE WIRES",
+  "relay-strike": "RELAY STRIKE",
+  blackout: "BLACKOUT PULSE"
 };
 var PROFILES = {
   calamari: { hp: 465, speed: 72, color: "#9e88ff", attacks: ["ink", "anchor", "tentacles"] },
   cupcake: { hp: 545, speed: 56, color: "#ff83cc", attacks: ["sprinkles", "cherry", "frosting"] },
+  grumblegrub: { hp: 670, speed: 67, color: "#baff7c", attacks: ["live-wires", "relay-strike", "blackout"] },
   "doom-burger": { hp: 735, speed: 76, color: "#ff9862", attacks: ["rush", "griddle", "double"] }
 };
 var DistrictBoss = class {
@@ -37012,6 +37376,27 @@ var DistrictBoss = class {
         break;
       case "double":
         this.warnings = [spot(aimX, hero.y, 76, 27, 2), spot(aimX + d * 122, hero.y > 267 ? 234 : 296, 69, 28, 2)];
+        break;
+      case "live-wires": {
+        const rows = [230, 269, 301];
+        const target = rows.reduce((closest, row) => deterministicMath.abs(row - hero.y) < deterministicMath.abs(closest - hero.y) ? row : closest);
+        const second = target === 269 ? this.cycles % 2 ? 230 : 301 : 269;
+        this.warnings = [lane(this.x + d * 115, target, 280, 13), lane(this.x + d * 115, second, 280, 12)];
+        if (hard) this.warnings.push(spot(this.x, this.y, 53, 19, 0.8));
+        break;
+      }
+      case "relay-strike": {
+        const otherY = hero.y < 266 ? 297 : 232;
+        this.warnings = [
+          spot(aimX, hero.y, 61, 21, hard ? 1.45 : 0.9),
+          spot(aimX + d * 125, otherY, 58, 20, 1.1)
+        ];
+        if (hard) this.warnings.push(spot(aimX - d * 128, 269, 63, 19, 1.15));
+        break;
+      }
+      case "blackout":
+        this.warnings = [lane(this.x - 151, 264, 112, 45, "burst"), lane(this.x + 151, 264, 112, 45, "burst")];
+        if (hard) this.warnings.push(lane(this.x, 301, 40, 14, "burst"));
         break;
     }
     game.sound.play("warning");
@@ -37109,7 +37494,7 @@ function label(text2, x, y, size = 12, color2 = WHITE2, align4 = "center", z = 7
   });
 }
 var Hud = class {
-  constructor(index, number, fighter, phone) {
+  constructor(index, number, part, fighter, phone) {
     this.phone = phone;
     const top = game.texture.create({ id: "hud-frame", layer: "hud", width: 640, height: 360, x: 320, y: 180 });
     this.center(top.handle);
@@ -37145,13 +37530,14 @@ var Hud = class {
     this.center(label("SCORE", 512, 24, 8, MUTED, "left"));
     this.center(label(fighter.name.toUpperCase(), 619, 39, 8, fighter.color, "right"));
     this.center(label(
-      (number ? "0" + number + " / " : "") + STAGES[index].title,
+      (number ? String(number).padStart(2, "0") + " / " : "") + STAGES[index].title,
       292,
       18,
       STAGES[index].title.length > 23 ? 10 : 11,
       STAGES[index].accent,
       "left"
     ));
+    if (part) this.center(label(part + "/3", 489, 18, 8, MUTED, "right", 7, "mono-bold"));
     this.hp = this.center(game.bars.create({
       x: 183,
       y: 14,
@@ -37495,7 +37881,7 @@ function drawSupers(ctx, combat, scroll) {
 // game/stage-art.ts
 var clampAlpha = (alpha) => clamp4(alpha, 0, 1);
 var StageArt = class {
-  constructor(stage, fighter, phone) {
+  constructor(stage, fighter, phone, destination) {
     this.stage = stage;
     this.phone = phone;
     const level = STAGES[stage];
@@ -37514,9 +37900,10 @@ var StageArt = class {
       visible: false,
       alpha: 0.84
     });
+    const art = level.art ?? stage;
     this.far = game.spawn({
       id: "panorama",
-      texture: "panorama-" + stage,
+      texture: "panorama-" + art,
       x: 576,
       y: 121.5,
       width: 1152,
@@ -37528,7 +37915,7 @@ var StageArt = class {
       const panel = i < 3 ? i : 5 - i;
       const street = game.spawn({
         id: "street",
-        texture: "deck-" + stage + "-" + panel,
+        texture: "deck-" + art + "-" + panel,
         x: 320 + i * 640,
         y: 180,
         width: 640,
@@ -37564,7 +37951,7 @@ var StageArt = class {
       ctx.font = "800 12px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(level.destination, 70, 18, 116);
+      ctx.fillText(destination, 70, 18, 116);
       ctx.strokeStyle = "#fff0ca";
       ctx.lineWidth = 2;
       ctx.beginPath();
@@ -37914,6 +38301,9 @@ var SIGN_DROP = 0.4;
 var VENT_PERIOD = 4.1;
 var VENT_WARNING = 1.9;
 var VENT_ACTIVE = 2.85;
+function cycles(spec) {
+  return spec.kind === "vent" || spec.kind === "relay";
+}
 function position(hazard) {
   return hazard.kind === "cart" ? hazard.x + deterministicMath.max(0, hazard.elapsed - CART_WARNING) * CART_SPEED * hazard.direction : hazard.x;
 }
@@ -37922,7 +38312,7 @@ var StreetHazards = class {
   constructor(specs) {
     this.hazards = specs.map((spec) => ({
       ...spec,
-      elapsed: spec.kind === "vent" ? spec.phase : -1,
+      elapsed: cycles(spec) ? spec.phase : -1,
       state: "idle",
       hit: /* @__PURE__ */ new Set()
     }));
@@ -37934,7 +38324,7 @@ var StreetHazards = class {
       if (hazard.state === "spent") continue;
       const previous = hazard.state;
       const { kind, y, hit } = hazard;
-      if (kind === "vent") {
+      if (cycles(hazard)) {
         hazard.elapsed = (hazard.elapsed + dt) % VENT_PERIOD;
         hazard.state = hazard.elapsed >= VENT_ACTIVE ? "active" : hazard.elapsed >= VENT_WARNING ? "warning" : "idle";
         if (hazard.state === "idle" && previous !== "idle") hit.clear();
@@ -37949,14 +38339,16 @@ var StreetHazards = class {
         hazard.state = hazard.elapsed < warning ? "warning" : hazard.elapsed < warning + duration ? "active" : "spent";
       }
       const x = position(hazard);
-      if (hazard.state === "warning" && previous !== "warning" && (kind !== "vent" || deterministicMath.abs(x - hero.x) < 215)) {
-        game.sound.play(kind === "vent" ? "fizz" : kind);
+      if (hazard.state === "warning" && previous !== "warning" && (!cycles(hazard) || deterministicMath.abs(x - hero.x) < 215)) {
+        game.sound.play(kind === "vent" ? "fizz" : kind === "relay" ? "power-crack" : kind);
       }
       if (hazard.state !== "active") continue;
       if (kind === "cart") {
         c.sceneryHit(x, y, 36, 18, 29, hazard.direction, 15, hit);
       } else if (kind === "vent") {
         c.sceneryHit(x, y, 43, 20, 25, 0, 12, hit);
+      } else if (kind === "relay") {
+        c.sceneryHit(x, y, 76, 13, 21, 0, 14, hit);
       } else {
         if (previous !== "active") {
           c.impact(x, y - 7, "#ffa86e", 49, "burst", 0.5);
@@ -37969,6 +38361,7 @@ var StreetHazards = class {
   hint(x) {
     const near = this.hazards.find((hazard) => hazard.state !== "idle" && hazard.state !== "spent" && deterministicMath.abs(position(hazard) - x) < (hazard.kind === "cart" ? 248 : 156));
     if (near?.kind === "cart") return "RUNAWAY CART   /   CHANGE LANES";
+    if (near?.kind === "relay") return "LIVE RAIL   /   JUMP OR CHANGE LANES";
     if (near?.kind === "vent") return (near.spray === "water" ? "WATER JET" : near.spray === "sugar" ? "SUGAR GEYSER" : "SODA VENT") + "   /   JUMP OR CHANGE LANES";
     if (near?.kind === "sign") return (near.label === "CARGO" ? "FALLING CARGO" : "LOOSE NEON") + "   /   CLEAR THE LANDING";
     return void 0;
@@ -37982,9 +38375,36 @@ var StreetHazards = class {
       if (hazard.kind === "cart") {
         if (hazard.state !== "spent") this.drawCart(ctx, hazard, x, age);
       } else if (hazard.kind === "vent") this.drawVent(ctx, hazard, x, age);
+      else if (hazard.kind === "relay") this.drawRelay(ctx, hazard, x, age);
       else this.drawSign(ctx, hazard, x, age);
     }
     ctx.restore();
+  }
+  drawRelay(ctx, { y, state }, x, age) {
+    const live = state === "active";
+    const armed = state === "warning";
+    ctx.fillStyle = "#171b29";
+    ctx.fillRect(x - 76, y - 4, 152, 8);
+    ctx.strokeStyle = live ? "#a5ff81" : armed ? "#ffdb64" : "#4d7077";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(x - 76, y - 4, 152, 8);
+    for (let i = -69; i < 74; i += 13) ctx.strokeRect(x + i, y - 1, 3, 2);
+    if (!live && !armed) return;
+    ctx.fillStyle = live ? "#afff7b32" : "#feb84d33";
+    ctx.fillRect(x - 76, y - 13, 152, 26);
+    ctx.setLineDash([5, 4]);
+    ctx.strokeRect(x - 76, y - 13, 152, 26);
+    ctx.setLineDash([]);
+    if (!live) return;
+    for (let arc = 0; arc < 2; arc++) {
+      ctx.strokeStyle = arc ? "#f2ffd2" : "#9cff83";
+      ctx.lineWidth = arc ? 1 : 2;
+      ctx.beginPath();
+      ctx.moveTo(x - 71, y);
+      for (let i = 1; i < 12; i++)
+        ctx.lineTo(x - 71 + i * 13, y - deterministicMath.abs(deterministicMath.sin(i * 13 + arc * 2 + age * 32)) * (arc ? 8 : 17));
+      ctx.stroke();
+    }
   }
   drawCart(ctx, { y, state, direction: direction2 }, x, age) {
     const live = state === "active";
@@ -38193,7 +38613,7 @@ var StreetHazards = class {
 var SAVE = "campaign-v1";
 var carry;
 var stageIndex = 0;
-var cleared = [];
+var clearedLevels = [];
 var persistentRun = true;
 var active = null;
 var inspectStage = () => ({
@@ -38204,19 +38624,27 @@ var inspectStage = () => ({
   time: 0,
   level: "",
   number: 0,
+  part: 0,
   exitX: 0
 });
 var result = { score: 0, best: 0, time: 0, bonus: false };
 var runFighter = DEFAULT_FIGHTER;
 function checkpoint() {
   const saved = game.save.read(SAVE, null);
-  if (!saved || !Number.isInteger(saved.level) || !STAGES[saved.level] || typeof saved.fighter !== "string" || !Array.isArray(saved.cleared) || saved.cleared.some((index) => !CHAPTERS[index]) || !["play", "world-map"].includes(saved.scene) || !Array.isArray(saved.carry?.assists)) return null;
+  if (!saved || !Number.isInteger(saved.level) || !STAGES[saved.level] || typeof saved.fighter !== "string" || !Array.isArray(saved.cleared) || saved.cleared.some((index) => !CHAPTERS[index]) || saved.clearedLevels !== void 0 && (!Array.isArray(saved.clearedLevels) || saved.clearedLevels.some((index) => !LEVELS[index])) || !["play", "world-map"].includes(saved.scene) || !Array.isArray(saved.carry?.assists)) return null;
   const { hp, score, energy, meter, time, stats } = saved.carry;
   if (![hp, score, energy, meter, time].every(Number.isFinite) || hp <= 0 || saved.carry.assists.some((index) => !Number.isInteger(index) || index < 0 || index > 3) || stats && !Array.isArray(stats.assists)) return null;
   return saved;
 }
 function saveCheckpoint(scene) {
-  if (persistentRun) game.save.write(SAVE, { level: stageIndex, scene, cleared, fighter: runFighter.id, carry });
+  if (persistentRun) game.save.write(SAVE, {
+    level: stageIndex,
+    scene,
+    cleared: securedDistricts(),
+    clearedLevels,
+    fighter: runFighter.id,
+    carry
+  });
 }
 function hasCheckpoint() {
   return checkpoint() !== null;
@@ -38227,7 +38655,7 @@ function continueRun() {
   active = null;
   persistentRun = true;
   stageIndex = saved.level;
-  cleared = [...new Set(saved.cleared)];
+  clearedLevels = [...new Set(saved.clearedLevels ?? saved.cleared.map((district) => CHAPTERS[district].levels[0]))];
   runFighter = fighterById(saved.fighter);
   carry = saved.carry;
   game.scenes.go(saved.scene);
@@ -38236,7 +38664,7 @@ function newRun(index = 0, opening = true, fighter = runFighter) {
   resetTouchStickers();
   stageIndex = clamp4(deterministicMath.floor(index), 0, STAGES.length - 1);
   active = null;
-  cleared = [];
+  clearedLevels = [];
   persistentRun = index === 0;
   runFighter = fighter;
   carry = { hp: fighter.hp, score: 0, energy: 60, meter: 0, assists: [], time: 0 };
@@ -38250,19 +38678,28 @@ function retryLevel() {
 function inBonus() {
   return stageIndex === BONUS_STAGE;
 }
+function securedDistricts() {
+  return CHAPTERS.flatMap((district, index) => district.levels.every((level) => clearedLevels.includes(level)) ? [index] : []);
+}
 function routeProgress() {
-  const last = chapterOf(stageIndex);
+  const lastLevel = levelOf(stageIndex);
+  const last = chapterOf(lastLevel);
+  const cleared = securedDistricts();
+  const next = CHAPTERS.map((district) => district.needs.every((prerequisite) => cleared.includes(prerequisite)) ? district.levels.find((level) => !clearedLevels.includes(level)) ?? -1 : -1);
   return {
-    cleared: [...cleared],
+    cleared,
+    clearedLevels: [...clearedLevels],
     last,
+    lastLevel,
     complete: cleared.length === CHAPTERS.length,
-    choices: CHAPTERS.map((_, index) => index).filter((index) => !cleared.includes(index) && (index === 0 || cleared.includes(0))),
+    next,
+    choices: next.flatMap((level, index) => level >= 0 ? [index] : []),
     score: carry?.score ?? 0
   };
 }
-function chooseChapter(index) {
-  if (!routeProgress().choices.includes(index)) return;
-  stageIndex = CHAPTERS[index].levels[0];
+function chooseLevel(index) {
+  if (!routeProgress().next.includes(index) || index < 0) return;
+  stageIndex = LEVELS[index].stages[0];
   startRoute();
 }
 function chooseBonus() {
@@ -38316,12 +38753,14 @@ var Play = {
     c.score = carry.score;
     if (carry.stats) c.stats = { ...carry.stats, assists: [...carry.stats.assists] };
     c.right = stage.width - 23;
-    const chapter = chapterOf(index);
-    const number = chapter < 0 ? 0 : cleared.length * 3 + CHAPTERS[chapter].levels.findIndex((i) => i === index) + 1;
+    const level = levelOf(index);
+    const part = LEVELS[level]?.stages.indexOf(index) ?? -1;
+    const number = CAMPAIGN_STAGES.indexOf(index) + 1;
     const phone = touchMode();
-    const view = new StageArt(index, runFighter, phone);
+    const destination = part === 2 && !stage.boss ? "DISTRICT MAP" : stage.destination;
+    const view = new StageArt(index, runFighter, phone, destination);
     const hazards = new StreetHazards(stage.hazards);
-    const hud = new Hud(index, number, runFighter, phone);
+    const hud = new Hud(index, number, part + 1, runFighter, phone);
     const buttons = phone ? new TouchButtons(runFighter) : null;
     track(stage.music);
     let fightsStarted = 0, distance3 = c.hero.x, age = 0, intro = 3.6, lost = 0;
@@ -38329,13 +38768,14 @@ var Play = {
     const destinationX = stage.boss?.at ?? exitX;
     for (const prop of stage.props) c.spawnProp(...prop);
     inspectStage = () => ({
-      stage: index + 1,
+      stage: number || CAMPAIGN_STAGES.length + 1,
       distance: deterministicMath.round(distance3),
       fightsStarted,
       hazards: hazards.inspect(),
       time: deterministicMath.round(carry.time + age),
       level: stage.title,
       number,
+      part: part + 1,
       exitX
     });
     const hint = () => {
@@ -38355,7 +38795,20 @@ var Play = {
         if (c.assists.length) return "CALL ALLY  U / RT     FULL METER SPECIAL  I / LB";
         return "BREAK PROPS FOR DROPS     COMBOS REFILL SHOT AND SPECIAL";
       }
-      return stage.destination + "   >>";
+      return destination + "   >>";
+    };
+    const clearLevel = (exitBonus = 0) => {
+      if (level >= 0 && !clearedLevels.includes(level)) clearedLevels.push(level);
+      carry = {
+        hp: c.hero.hp,
+        energy: c.hero.energy,
+        meter: c.hero.meter,
+        score: c.score + exitBonus,
+        assists: c.assists,
+        stats: c.stats,
+        time: carry.time + age
+      };
+      showWorldMap();
     };
     game.step("street", (dt) => {
       if (actionPressed("pause") && c.hero.hp > 0) {
@@ -38388,20 +38841,11 @@ var Play = {
         lost += dt;
         if (lost > 1) finish(false);
       } else if (c.boss?.defeated) {
-        if (index === BONUS_STAGE) return finish(true);
-        if (!cleared.includes(chapter)) cleared.push(chapter);
-        carry = {
-          hp: h.hp,
-          energy: h.energy,
-          meter: h.meter,
-          score: c.score,
-          assists: c.assists,
-          stats: c.stats,
-          time: carry.time + age
-        };
-        showWorldMap();
+        if (index === BONUS_STAGE && (!persistentRun || routeProgress().complete)) return finish(true);
+        clearLevel();
       } else if (!stage.boss && h.x >= exitX) {
         game.sound.play("arrival");
+        if (part === 2) return clearLevel(1500);
         carry = {
           hp: deterministicMath.min(h.fighter.hp, h.hp + 14),
           energy: h.energy,
@@ -38411,7 +38855,7 @@ var Play = {
           stats: c.stats,
           time: carry.time + age
         };
-        stageIndex++;
+        stageIndex = LEVELS[level].stages[part + 1];
         saveCheckpoint("play");
         game.scenes.go("play");
       }
@@ -38423,11 +38867,24 @@ var Play = {
 function addDebugControls() {
   game.cheats.add({
     name: "stage",
-    does: "Start a fresh run at stage 1\u20139, or 10 for the optional boss",
+    does: "Start at a campaign stage, or use bonus for After Hours",
+    args: "number | bonus",
+    run: (n) => {
+      const index = n === "bonus" || Number(n) === CAMPAIGN_STAGES.length + 1 ? BONUS_STAGE : CAMPAIGN_STAGES[(Number(n) || 1) - 1];
+      if (index === void 0) return "Stage out of range";
+      newRun(index, false);
+      return "Stage loaded";
+    }
+  });
+  game.cheats.add({
+    name: "level",
+    does: "Start at the first stage of a campaign level",
     args: "number",
     run: (n) => {
-      newRun((Number(n) || 1) - 1, false);
-      return "Stage loaded";
+      const level = LEVELS[(Number(n) || 1) - 1];
+      if (!level) return "Level out of range";
+      newRun(level.stages[0], false);
+      return level.name;
     }
   });
   game.cheats.add({
@@ -38457,78 +38914,92 @@ function addDebugControls() {
 }
 
 // game/scenes/WorldMap.ts
+var BONUS = CHAPTERS.length;
+var FINISH = BONUS + 1;
+var nodeWidth = 146;
+var nodeHeight = 43;
 var nodes2 = [
-  { x: 28, y: 118, name: "SNACK CITY", color: CHAPTERS[0].color },
-  { x: 250, y: 69, name: "SIZZLE DOCKS", color: CHAPTERS[1].color },
-  { x: 250, y: 168, name: "SUGAR CARNIVAL", color: CHAPTERS[2].color },
-  { x: 459, y: 118, name: "AFTER HOURS", color: "#ff9867" }
+  { x: 27, y: 101, name: "SNACK CITY", color: CHAPTERS[0].color },
+  { x: 247, y: 67, name: "SIZZLE DOCKS", color: CHAPTERS[1].color },
+  { x: 247, y: 135, name: "SUGAR CARNIVAL", color: CHAPTERS[2].color },
+  { x: 467, y: 67, name: "BLACKOUT GRID", color: CHAPTERS[3].color },
+  { x: 467, y: 135, name: "AFTER HOURS", color: "#ff9867" }
 ];
-var nodeWidth = 153;
-var nodeHeight = 54;
-var BONUS = 3;
-var FINISH = 4;
 var WorldMap = {
   name: "world-map",
   enter() {
     const progress = routeProgress();
-    const available = progress.complete ? [BONUS, FINISH] : progress.choices;
-    let selected = available[0] ?? 0;
-    let age = 0, previousAxis = 0;
+    const returning = progress.choices.includes(progress.last) ? progress.last : progress.choices[0];
+    let selected = progress.complete ? BONUS : returning ?? 0;
+    let age = 0, previousAxis = 0, axisReady = false;
     game.camera.snap(320, 180, 1);
     track("world-map", 0.4, 0.78);
     game.spawn({ texture: "panorama-2", x: 320, y: 180, width: 1024, height: 360, layer: "back" });
     const map = game.texture.create({ id: "snack-city-map", layer: "hud", width: 640, height: 360, x: 320, y: 180 });
     map.handle.z = 2;
-    label("SNACK CITY", 28, 23, 23, WHITE2, "left", 8);
-    label(progress.cleared.length + " / 3 DISTRICTS SECURED", 606, 20, 10, GOLD, "right", 8, "mono-bold");
-    label("TITLE", 605, 37, 10, MUTED, "right", 8);
-    const story = progress.complete ? "The relays are down. A message marked DOOM BURGER just came in." : CHAPTERS[progress.last]?.clear ?? "Follow the signal to the kitchen relay.";
-    label(story, 29, 46, 11, "#e5c9ef", "left", 8);
-    for (const [i, node] of nodes2.entries()) {
-      const cleared2 = progress.cleared.includes(i);
-      const unlocked = available.includes(i);
-      const status = cleared2 ? "SECURED" : i === BONUS ? unlocked ? "OPTIONAL BOSS" : "LOCKED" : unlocked ? "3 LEVELS" : "LOCKED";
-      label(node.name, node.x + 13, node.y + 19, 13, unlocked || cleared2 ? WHITE2 : MUTED, "left", 8);
-      label(status, node.x + 13, node.y + 37, 9, unlocked || cleared2 ? node.color : MUTED, "left", 8, "mono-bold");
+    label("SNACK CITY", 27, 23, 24, WHITE2, "left", 8);
+    label(progress.cleared.length + " / " + CHAPTERS.length + " DISTRICTS SECURED", 611, 20, 10, GOLD, "right", 8, "mono-bold");
+    label("TITLE", 611, 40, 10, MUTED, "right", 8);
+    const story = progress.complete ? "Grumblegrub is down. One last order just came in." : progress.choices.includes(3) ? "Both signals converge on the Blackout Grid." : progress.last >= 0 && progress.cleared.includes(progress.last) ? CHAPTERS[progress.last].clear : progress.lastLevel >= 0 ? LEVELS[progress.lastLevel].name + " cleared. The relay signal is getting stronger." : "Follow the signal to the kitchen relay.";
+    label(story, 28, 47, 11, "#e5c9ef", "left", 8);
+    for (const [index, node] of nodes2.entries()) {
+      const district = CHAPTERS[index];
+      const secured = progress.cleared.includes(index);
+      const unlocked = index === BONUS ? progress.complete : progress.choices.includes(index);
+      const available = secured || unlocked;
+      const count = district?.levels.filter((level) => progress.clearedLevels.includes(level)).length ?? 0;
+      const status = secured ? "SECURED" : index === BONUS ? unlocked ? "OPTIONAL BOSS" : "LOCKED" : (unlocked ? count + " / " : "") + district.levels.length + (district.levels.length === 1 ? " LEVEL" : " LEVELS") + (unlocked ? "" : "  /  LOCKED");
+      label(node.name, node.x + 12, node.y + 15, 13, available ? WHITE2 : MUTED, "left", 8);
+      label(status, node.x + 12, node.y + 31, 9, available ? node.color : MUTED, "left", 8, "mono-bold");
     }
-    const heading = label("", 42, 258, 17, WHITE2, "left", 8);
-    const briefing = label("", 43, 281, 11, "#ebd2eb", "left", 8);
-    const itinerary = label("", 43, 303, 9, MUTED, "left", 8);
-    const action = label("", 535, 275, 12, WHITE2, "center", 8);
-    const finishButton = label("FINISH RUN", 535, 308, 11, WHITE2, "center", 8);
-    finishButton.visible = progress.complete;
-    label(
-      touchMode() ? "Tap a district to see its route" : "\u2190 \u2192  Choose    Enter / A  Confirm    Esc / B  Title",
-      320,
-      345,
-      10,
-      WHITE2,
-      "center",
-      8
-    );
+    const heading = label("", 41, 211, 17, WHITE2, "left", 8);
+    const briefing = label("", 42, 233, 11, "#ebd2eb", "left", 8);
+    const cards = Array.from({ length: 4 }, (_, index) => ({
+      title: label("", 42 + index * 145, 264, 11, WHITE2, "left", 8),
+      status: label("", 42 + index * 145, 278, 8, MUTED, "left", 8, "mono-bold")
+    }));
+    const itinerary = label("", 42, 310, 9, "#e0cbee", "left", 8);
+    const action = label("", 531, 310, 11, WHITE2, "center", 8);
+    const finishButton = label("FINISH RUN", 531, 310, 11, WHITE2, "center", 8);
+    const footer2 = label("", 320, 345, 10, WHITE2, "center", 8);
+    footer2.text = touchMode() ? "Tap a district to see its levels" : "\u2190 \u2192  Browse    Enter / A  Confirm    Esc / B  Title";
     const paint2 = () => {
-      const chapter = CHAPTERS[selected];
-      const active2 = available.includes(selected);
-      heading.text = chapter?.name ?? (selected === BONUS ? "After Hours" : "Snack City is safe");
+      const district = CHAPTERS[selected];
+      const next = progress.next[selected] ?? -1;
+      const active2 = next >= 0 || progress.complete && selected >= BONUS;
+      const secured = progress.cleared.includes(selected);
+      const levels = district?.levels ?? [];
+      const route = LEVELS[next];
+      heading.text = district?.name ?? (selected === BONUS ? "After Hours" : "Snack City is safe");
       heading.color = nodes2[selected]?.color ?? GOLD;
-      briefing.text = chapter ? progress.cleared.includes(selected) ? chapter.clear : chapter.briefing : selected === BONUS ? active2 ? "Doom Burger is waiting on the old strip." : "Secure all three districts to unlock this fight." : "Bank your score and celebrate with the crew.";
-      itinerary.text = chapter ? chapter.levels.map((level) => STAGES[level].title).join("  \u203A  ") : selected === BONUS ? "BOSS  /  DOOM BURGER" : "FINAL SCORE  /  " + String(progress.score).padStart(7, "0");
-      if (chapter && !active2 && !progress.cleared.includes(selected)) briefing.text = "Defeat the Iron Oven to open this route.";
-      action.text = selected === FINISH ? "FINISH RUN" : selected === BONUS ? "TAKE CHALLENGE" : "TAKE ROUTE";
+      briefing.text = district ? secured ? district.clear : active2 ? district.briefing : selected === 3 ? "Secure Sizzle Docks and Sugar Carnival to unlock this district." : "Defeat the Iron Oven to open this route." : selected === BONUS ? active2 ? "Doom Burger is waiting on the old strip." : "Secure all four districts to unlock this fight." : "Bank your score and celebrate with the crew.";
+      for (const [index, card] of cards.entries()) {
+        const level = levels[index];
+        card.title.visible = card.status.visible = level !== void 0;
+        if (level === void 0) continue;
+        const complete = progress.clearedLevels.includes(level);
+        card.title.text = LEVELS[level].name.toUpperCase();
+        card.title.color = level === next || complete ? WHITE2 : MUTED;
+        card.status.text = complete ? "CLEARED" : level === next ? "NEXT / 3 STAGES" : "LOCKED";
+        card.status.color = level === next || complete ? heading.color : MUTED;
+      }
+      itinerary.text = route ? route.stages.map((stage) => STAGES[stage].title).join("  \u203A  ") : selected === BONUS ? "BOSS  /  DOOM BURGER" : selected === FINISH ? "FINAL SCORE  /  " + String(progress.score).padStart(7, "0") : "";
+      action.text = district ? "START LEVEL" : selected === BONUS ? "TAKE CHALLENGE" : "FINISH RUN";
+      action.x = selected === BONUS && progress.complete ? 366 : 531;
       action.visible = active2;
-      finishButton.visible = progress.complete && selected !== FINISH;
+      finishButton.visible = progress.complete && selected === BONUS;
       map.clear().draw((ctx) => {
-        ctx.fillStyle = "#151127f3";
+        ctx.fillStyle = "#151127ef";
         ctx.fillRect(0, 0, 640, 360);
         ctx.fillStyle = "#112837";
         ctx.beginPath();
         ctx.moveTo(0, 59);
         ctx.lineTo(160, 59);
-        ctx.lineTo(206, 90);
-        ctx.lineTo(206, 126);
-        ctx.lineTo(145, 173);
-        ctx.lineTo(127, 238);
-        ctx.lineTo(0, 238);
+        ctx.lineTo(206, 81);
+        ctx.lineTo(206, 107);
+        ctx.lineTo(145, 147);
+        ctx.lineTo(127, 188);
+        ctx.lineTo(0, 188);
         ctx.closePath();
         ctx.fill();
         ctx.strokeStyle = "#28596b";
@@ -38536,54 +39007,67 @@ var WorldMap = {
         ctx.stroke();
         ctx.lineWidth = 1;
         ctx.strokeStyle = "#332b48";
-        for (let x = 214; x < 640; x += 25) {
+        for (let x = 214; x < 700; x += 25) {
           ctx.beginPath();
           ctx.moveTo(x, 56);
-          ctx.lineTo(x - 59, 238);
+          ctx.lineTo(x - 44, 189);
           ctx.stroke();
         }
-        for (let y = 66; y < 235; y += 21) ctx.strokeRect(17, y, 623, 0.4);
-        const route = (a, b, unlocked) => {
-          const first = nodes2[a], next = nodes2[b];
-          const x = first.x + nodeWidth, y = first.y + nodeHeight / 2;
+        for (let y = 65; y < 190; y += 18) ctx.strokeRect(17, y, 623, 0.4);
+        const link = (a, b, open) => {
+          const first = nodes2[a], target = nodes2[b];
           ctx.beginPath();
-          ctx.moveTo(x, y);
-          ctx.lineTo((x + next.x) / 2, y);
-          ctx.lineTo((x + next.x) / 2, next.y + nodeHeight / 2);
-          ctx.lineTo(next.x, next.y + nodeHeight / 2);
-          ctx.strokeStyle = unlocked ? next.color : "#514660";
-          ctx.lineWidth = unlocked ? 2.5 : 1.5;
-          ctx.setLineDash(unlocked ? [] : [5, 5]);
+          if (first.x === target.x) {
+            ctx.moveTo(first.x + nodeWidth / 2, first.y + nodeHeight);
+            ctx.lineTo(target.x + nodeWidth / 2, target.y);
+          } else {
+            const end = first.x + nodeWidth, middle = (end + target.x) / 2;
+            ctx.moveTo(end, first.y + nodeHeight / 2);
+            ctx.lineTo(middle, first.y + nodeHeight / 2);
+            ctx.lineTo(middle, target.y + nodeHeight / 2);
+            ctx.lineTo(target.x, target.y + nodeHeight / 2);
+          }
+          ctx.strokeStyle = open ? target.color : "#5f506c";
+          ctx.lineWidth = open ? 2.5 : 1.5;
+          ctx.setLineDash(open ? [] : [5, 5]);
           ctx.stroke();
           ctx.setLineDash([]);
         };
-        route(0, 1, progress.cleared.includes(0));
-        route(0, 2, progress.cleared.includes(0));
-        route(1, 3, progress.complete);
-        route(2, 3, progress.complete);
-        for (const [i, node] of nodes2.entries()) {
-          ctx.fillStyle = i === selected ? "#3b2350" : "#1d182f";
+        link(0, 1, progress.cleared.includes(0));
+        link(0, 2, progress.cleared.includes(0));
+        link(1, 3, progress.cleared.includes(1));
+        link(2, 3, progress.cleared.includes(2));
+        link(3, BONUS, progress.complete);
+        nodes2.forEach((node, index) => {
+          const selectedNode = index === selected;
+          ctx.fillStyle = selectedNode ? "#38294c" : "#211a33";
           ctx.fillRect(node.x, node.y, nodeWidth, nodeHeight);
-          ctx.lineWidth = i === selected ? 2.5 : 1;
-          ctx.strokeStyle = i === selected || progress.cleared.includes(i) ? node.color : "#716281";
+          ctx.lineWidth = selectedNode ? 2.5 : 1;
+          ctx.strokeStyle = selectedNode || progress.cleared.includes(index) ? node.color : "#716281";
           ctx.strokeRect(node.x, node.y, nodeWidth, nodeHeight);
           ctx.fillStyle = node.color;
-          ctx.fillRect(node.x + 3, node.y + 7, 3, nodeHeight - 14);
-        }
+          ctx.fillRect(node.x + 3, node.y + 6, 3, nodeHeight - 12);
+        });
         ctx.fillStyle = "#211732";
-        ctx.fillRect(28, 239, 584, 92);
+        ctx.fillRect(27, 194, 586, 137);
         ctx.strokeStyle = heading.color;
         ctx.lineWidth = 1;
-        ctx.strokeRect(28, 239, 584, 92);
-        if (active2) {
-          ctx.fillStyle = "#533453";
-          ctx.fillRect(463, 261, 141, 27);
-          ctx.strokeRect(463, 261, 141, 27);
-        }
-        if (finishButton.visible) {
-          ctx.strokeStyle = "#9a7495";
-          ctx.strokeRect(463, 295, 141, 25);
-        }
+        ctx.strokeRect(27, 194, 586, 137);
+        levels.forEach((level, index) => {
+          const x = 34 + index * 145;
+          ctx.fillStyle = level === next ? "#473055" : "#1a142a";
+          ctx.fillRect(x, 251, 137, 35);
+          ctx.strokeStyle = level === next ? heading.color : "#5b4867";
+          ctx.strokeRect(x, 251, 137, 35);
+        });
+        ctx.strokeStyle = heading.color;
+        const button = (x) => {
+          ctx.fillStyle = "#543453";
+          ctx.fillRect(x - 69, 296, 138, 27);
+          ctx.strokeRect(x - 69, 296, 138, 27);
+        };
+        if (active2) button(action.x);
+        if (finishButton.visible) button(finishButton.x);
       });
     };
     const select = (index) => {
@@ -38593,11 +39077,12 @@ var WorldMap = {
       paint2();
     };
     const commit = (index) => {
-      if (!available.includes(index)) return;
+      const level = progress.next[index] ?? -1;
+      if (level < 0 && !(progress.complete && index >= BONUS)) return;
       game.sound.play("pick");
       if (index === FINISH) finish(true);
       else if (index === BONUS) chooseBonus();
-      else chooseChapter(index);
+      else chooseLevel(level);
     };
     paint2();
     game.step("world-map-navigation", (dt) => {
@@ -38606,18 +39091,26 @@ var WorldMap = {
       const axis2 = moveAxis();
       const strength2 = deterministicMath.abs(axis2.x) >= deterministicMath.abs(axis2.y) ? axis2.x : axis2.y;
       const direction2 = deterministicMath.abs(strength2) > 0.45 ? deterministicMath.sign(strength2) : 0;
-      if (direction2 && direction2 !== previousAxis && available.length)
-        select(available[(available.indexOf(selected) + direction2 + available.length) % available.length]);
-      previousAxis = direction2;
       if (age < 0.25) return;
+      if (!direction2) axisReady = true;
+      const stops = nodes2.length + Number(progress.complete);
+      if (axisReady && direction2 && direction2 !== previousAxis) select((selected + direction2 + stops) % stops);
+      previousAxis = direction2;
       if (game.controls.justPressed("back")) return game.scenes.go("title");
       if (game.controls.justPressed("accept")) return commit(selected);
       const pointer = game.input.pointer;
       if (!pointer?.pressed) return;
       const { x, y } = pointer;
-      if (x > 565 && y > 27 && y < 53) return game.scenes.go("title");
-      if (x >= 458 && y >= 257 && y <= 290) return commit(selected);
-      if (progress.complete && x >= 458 && y >= 291 && y <= 326) return commit(FINISH);
+      if (x > 565 && y > 28 && y < 55) return game.scenes.go("title");
+      if (y >= 293 && y <= 327) {
+        if (finishButton.visible && deterministicMath.abs(x - finishButton.x) <= 73) return commit(FINISH);
+        if (action.visible && deterministicMath.abs(x - action.x) <= 73) return commit(selected);
+      }
+      if (y >= 251 && y <= 286) {
+        const slot = deterministicMath.floor((x - 34) / 145);
+        const level = CHAPTERS[selected]?.levels[slot];
+        if (level !== void 0 && progress.next[selected] === level) return commit(selected);
+      }
       const node = nodes2.findIndex((n) => x >= n.x && x <= n.x + nodeWidth && y >= n.y && y <= n.y + nodeHeight);
       if (node >= 0) select(node);
     });
@@ -39219,7 +39712,7 @@ var GameOver = {
     });
     type("Score", 283, 208, 12, MUTED, "right");
     type(String(result.score).padStart(7, "0"), 298, 208, 19, GOLD, "left", 14, "mono-bold");
-    const choices = [{ text: "Retry Level", action: retryLevel }];
+    const choices = [{ text: "Retry Stage", action: retryLevel }];
     if (inBonus()) choices.push({ text: "World Map", action: showWorldMap });
     choices.push({ text: "Title Screen", action: title });
     menu(choices, 320, inBonus() ? 244 : 253, 175, title);
